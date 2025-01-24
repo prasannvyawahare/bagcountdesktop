@@ -1,4 +1,3 @@
-//import 'package:bagreportun/repository.dart';
 import 'package:flutter/material.dart';
 
 
@@ -13,7 +12,6 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final Repository _userRepository = Repository();
 
   String _errorMessage = '';
 
