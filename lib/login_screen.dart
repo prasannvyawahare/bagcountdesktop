@@ -1,7 +1,7 @@
-import 'package:bagreportun/repository.dart';
+//import 'package:bagreportun/repository.dart';
 import 'package:flutter/material.dart';
 
-import 'db/model/user.dart';
+
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -22,24 +22,24 @@ class _LoginScreenState extends State<LoginScreen> {
     String password = _passwordController.text;
     print(username);
     print(password);
-    bool isValid = await _userRepository.validateLogin(username, password);
-    if (isValid) {
-      // Proceed to the next screen or show success
-      //Navigator.pushReplacementNamed(context, '/home');
-      print("doneeeeeeeeeeeeeeee");
+   // bool isValid = await _userRepository.validateLogin(username, password);
+    // if (isValid) {
+    //   // Proceed to the next screen or show success
+    //   //Navigator.pushReplacementNamed(context, '/home');
+    //   print("doneeeeeeeeeeeeeeee");
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Login successful")),
-      );
-    } else {
-      _userRepository.addUser(User(username: username, password: password));
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("User Added")),
-      );
-      setState(() {
-        _errorMessage = 'Invalid username or password';
-      });
-    }
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     SnackBar(content: Text("Login successful")),
+    //   );
+    // } else {
+    // //  _userRepository.addUser(User(username: username, password: password));
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     SnackBar(content: Text("User Added")),
+    //   );
+    //   setState(() {
+    //     _errorMessage = 'Invalid username or password';
+    //   });
+    // }
   }
 
   @override
@@ -76,3 +76,4 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+
