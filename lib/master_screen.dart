@@ -1,3 +1,4 @@
+import 'package:bagreportun/product_screen.dart';
 import 'package:bagreportun/shift_setting_screen.dart';
 import 'package:bagreportun/vew_report_screen.dart';
 import 'package:flutter/material.dart';
@@ -16,8 +17,7 @@ class _MasterScreenState extends State<MasterScreen> {
 
   final List<Widget> _screens = [
     ShiftSettingScreen(),
-    // ShiftSettingScreen(),
-    Center(child: Text('Brand'),),
+    ProductScreen(),
     ComSetting(),
     VewReportScreen (),
     VewReportScreen (),

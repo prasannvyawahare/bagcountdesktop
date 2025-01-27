@@ -1,107 +1,83 @@
-
-import 'package:bagreportun/model/user.dart';
+import 'dart:io';
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-class DatabaseHelper{
-  final databaseName = "bagcount.db";
+class DatabaseHelper {
+  static final DatabaseHelper _instance = DatabaseHelper._internal();
 
-  //It must be same as your column in table with json model
-  String accountTbl = '''
-  CREATE TABLE user (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  username TEXT NOT NULL,
-  password TEXT NOT NULL,
+  factory DatabaseHelper() => _instance;
 
-  )''';
+  static Database? _database;
 
-  //Database connection
-  Future<Database> init()async{
-    final databasePath = await getApplicationDocumentsDirectory();
-    final path = "${databasePath.path}/$databaseName";
-    return openDatabase(path,version: 1,onCreate: (db,version)async{
+  DatabaseHelper._internal();
 
-      //Tables
-      await db.execute(accountTbl);
+  Future<Database> get database async {
+    if (_database != null) return _database!;
 
-    });
+    _database = await _initDatabase();
+    return _database!;
   }
 
-  //CRUD Methods
+  Future<Database> _initDatabase() async {
+    sqfliteFfiInit();
+    final dbFactory = databaseFactoryFfi;
+    final directory = await getApplicationDocumentsDirectory();
+    final path = p.join(directory.path, 'app_database.db');
 
-  //Get
-  Future<List<User>> getAccounts()async{
-    final Database db = await init();
-    List<Map<String,Object?>> result = await db.query("accounts",where: "accStatus = 1");
-    return result.map((e) => User.fromMap(e)).toList();
-  }
+    return await dbFactory.openDatabase(path, options: OpenDatabaseOptions(
+      version: 1,
+      onCreate: (db, version) async {
+        await db.execute('''
+          CREATE TABLE Port (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            port_name TEXT NOT NULL,
+            baud_rate INTEGER NOT NULL,
+            data_bits INTEGER NOT NULL,
+            parity TEXT NOT NULL,
+            stop_bits INTEGER NOT NULL
+          );
+        ''');
 
+        await db.execute('''
+          CREATE TABLE Shift (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            shift_name TEXT NOT NULL,
+            start_time TEXT NOT NULL,
+            end_time TEXT NOT NULL,
+            is_active INTEGER NOT NULL DEFAULT 1
+          );
+        ''');
 
-  //Insert
-  Future<int> insertUser(User user)async{
-    final Database db = await init();
-    return db.insert("user", user.toMap());
-  }
+        await db.execute('''
+          CREATE TABLE Reading (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT NOT NULL,
+            value REAL NOT NULL,
+            unit TEXT NOT NULL
+          );
+        '''
+        );
 
-  //Update
-  Future<int> updateUser(String username, String password, int id )async{
-    final Database db = await init();
-    return db.rawUpdate("update user set username = ?, password = ? where id = ?",[username, password, id]);
-  }
+        await db.execute('''
+          CREATE TABLE User (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            password TEXT NOT NULL
+          );
+        '''
+        );
 
-  //Delete
-  Future<int> deleteAccount(int id)async{
-    final Database db = await init();
-    return db.delete("accounts",where: "accId = ?",whereArgs: [id]);
-  }
-
-  // Future<List<User>> filter(String keyword)async{
-  //   final Database db = await init();
-  //   List<Map<String,Object?>> result = await db.rawQuery("select * from accounts where accHolder LIKE ? OR accName LIKE ?",["%$keyword%","%$keyword%"]);
-  //   return result.map((e) => AccountsJson.fromMap(e)).toList();
-  // }
-
-
-Future<User?> getUserByUsername(String username) async {
-  final db = await  init();
-  List<Map<String, dynamic>> maps = await db.query(
-    'user',
-    where: 'username = ?',
-    whereArgs: [username],
-  );
-
-  if (maps.isNotEmpty) {
-    return User.fromMap(maps.first);
-  } else {
-    return null;
-  }
-}
-
-Future<User?> getUserById(int id) async {
-  final Database db = await init();
-  List<Map<String, dynamic>> result = await db.query(
-    "user",
-    where: "id = ?",
-    whereArgs: [id],
-  );
-
-  if (result.isNotEmpty) {
-    return User.fromMap(result.first);
-  } else {
-    return null;
+        await db.execute(''' 
+        CREATE TABLE Product (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          description TEXT NOT NULL,
+          brand TEXT NOT NULL,
+          value REAL NOT NULL
+        );
+      ''');
+      },
+    ));
   }
 }
-
-Future<bool> checkUserCredentials(String username, String password) async {
-  final Database db = await init();
-  List<Map<String, dynamic>> result = await db.query(
-    "user",
-    where: "username = ? AND password = ?",
-    whereArgs: [username, password],
-  );
-
-  return result.isNotEmpty;
-}
-
-// ...existing code...
- }
