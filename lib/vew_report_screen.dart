@@ -1,4 +1,7 @@
+import 'package:bagreportun/repository/reading_repository.dart';
 import 'package:flutter/material.dart';
+
+import 'model/reading.dart';
 
 class VewReportScreen extends StatefulWidget {
   const VewReportScreen({super.key});
@@ -9,6 +12,8 @@ class VewReportScreen extends StatefulWidget {
 }
 
 class _VewReportScreenState extends State<VewReportScreen> {
+  final ReadingRepository _readingRepository = ReadingRepository();
+   List<Reading> readings = [];
   List<String> _mapList = ["All","Google Maps", "Apple Maps", "Bing Maps", "OpenStreetMap"];
   String? _selectedMap; // Variable to store the selected map
 
@@ -53,7 +58,22 @@ class _VewReportScreenState extends State<VewReportScreen> {
        });
      }
    }
+
+   void readDataFromDB() async {
+     readings = await _readingRepository.getAllReadings();
+     print(readings);
+     setState(() {
+
+     });
+   }
   @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    readDataFromDB();
+  }
+
+   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -338,7 +358,7 @@ class _VewReportScreenState extends State<VewReportScreen> {
                           ),
                         ),
                         SizedBox(height: 20),
-                        Container(
+                        SizedBox(
                           width: 150,
                           child: ElevatedButton(
                             onPressed: () {},
@@ -436,73 +456,88 @@ class _VewReportScreenState extends State<VewReportScreen> {
 
               ],),
               SizedBox(height: 20),
-              // Table Section
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Container(
-                    // decoration: BoxDecoration(
-                    //   borderRadius: BorderRadius.circular(12),
-                    //   border: Border.all(color: Colors.grey[300]!, width: 1),
-                    //   color:Colors.grey[100],
-                    // ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12), // Rounded corners for the DataTable
-
-                      child: DataTable(
-                        headingRowColor: MaterialStateColor.resolveWith((states) => Colors.grey.shade100), // Title row color
-                        dataRowColor: MaterialStateColor.resolveWith((states) => Colors.white), // Data row color
-                        //columnSpacing: 10,
-                        columnSpacing: 10,
-                        columns: const [
-                          DataColumn(
-                            label: SizedBox(
-                              width: 50, // Adjust width for Sr.No.
-                              child: Text('Sr.No.',textAlign: TextAlign.left),
-                            ),
-                          ),
-                          DataColumn(
-                            label: SizedBox(
-                              width: 50, // Adjust width for Sr.No.
-                              child: Text('Shift',textAlign: TextAlign.left),
-                            ),
-                          ),
-                          DataColumn(label: Text('Brand')),
-                          DataColumn(label: Text('Ton')),
-                          DataColumn(label: Text('MRP')),
-                          // DataColumn(label: Text('Truck No.')),
-                          // DataColumn(label: Text('p(+)/m(-) variation')),
-                          // DataColumn(label: Text('Start Time')),
-                          // DataColumn(label: Text('Stop Time')),
-                          // DataColumn(label: Text('Counter Status')),
-                          // DataColumn(label: Text('Bags Allotted')),
-                          DataColumn(label: Text('Extra Bags')),
-                          DataColumn(label: Text('Tech. Name')),
-                        ],
-                        rows: [
-                          DataRow(cells: [
-                            DataCell(Text('1')),
-                            DataCell(Text('User Research and Per...')),
-                            DataCell(Text('July 1, 2024')),
-                            DataCell(Text('Done', style: TextStyle(color: Colors.green))),
-                            DataCell(Text('Submitted')),
-                            DataCell(Text('Submitted')),
-                            DataCell(Text('Submitted')),
-                          ]),
-                          DataRow(cells: [
-                            DataCell(Text('2')),
-                            DataCell(Text('Competitive Analysis...')),
-                            DataCell(Text('July 25, 2024')),
-                            DataCell(Text('July 25, 2024')),
-                            DataCell(Text('Progress', style: TextStyle(color: Colors.blue))),
-                            DataCell(Text('Progress', style: TextStyle(color: Colors.blue))),
-                            DataCell(ElevatedButton(onPressed: () {}, child: Text('Upload'))),
-                          ]),
-                        ],
-                      ),
-                    ),
-                  ),
+              readings.length>0?Container(
+                height: 300,
+                child: ListView.builder(
+                  itemCount: readings.length,
+                  itemBuilder: (context, index) {
+                    return ListTile(
+                      title: Text(readings[index].value.toString()),
+                    );
+                  },
+                ),
+              ):Container(
+                child: Center(
+                  child: Text("No Data Found"),
                 ),
               ),
+              // Table Section
+              // Expanded(
+              //   child: SingleChildScrollView(
+              //     child: Container(
+              //       // decoration: BoxDecoration(
+              //       //   borderRadius: BorderRadius.circular(12),
+              //       //   border: Border.all(color: Colors.grey[300]!, width: 1),
+              //       //   color:Colors.grey[100],
+              //       // ),
+              //       child: ClipRRect(
+              //         borderRadius: BorderRadius.circular(12), // Rounded corners for the DataTable
+              //
+              //         child: DataTable(
+              //           headingRowColor: MaterialStateColor.resolveWith((states) => Colors.grey.shade100), // Title row color
+              //           dataRowColor: MaterialStateColor.resolveWith((states) => Colors.white), // Data row color
+              //           //columnSpacing: 10,
+              //           columnSpacing: 10,
+              //           columns: const [
+              //             DataColumn(
+              //               label: SizedBox(
+              //                 width: 50, // Adjust width for Sr.No.
+              //                 child: Text('Sr.No.',textAlign: TextAlign.left),
+              //               ),
+              //             ),
+              //             DataColumn(
+              //               label: SizedBox(
+              //                 width: 50, // Adjust width for Sr.No.
+              //                 child: Text('Shift',textAlign: TextAlign.left),
+              //               ),
+              //             ),
+              //             DataColumn(label: Text('Brand')),
+              //             DataColumn(label: Text('Ton')),
+              //             DataColumn(label: Text('MRP')),
+              //             // DataColumn(label: Text('Truck No.')),
+              //             // DataColumn(label: Text('p(+)/m(-) variation')),
+              //             // DataColumn(label: Text('Start Time')),
+              //             // DataColumn(label: Text('Stop Time')),
+              //             // DataColumn(label: Text('Counter Status')),
+              //             // DataColumn(label: Text('Bags Allotted')),
+              //             DataColumn(label: Text('Extra Bags')),
+              //             DataColumn(label: Text('Tech. Name')),
+              //           ],
+              //           rows: [
+              //             DataRow(cells: [
+              //               DataCell(Text('1')),
+              //               DataCell(Text('User Research and Per...')),
+              //               DataCell(Text('July 1, 2024')),
+              //               DataCell(Text('Done', style: TextStyle(color: Colors.green))),
+              //               DataCell(Text('Submitted')),
+              //               DataCell(Text('Submitted')),
+              //               DataCell(Text('Submitted')),
+              //             ]),
+              //             DataRow(cells: [
+              //               DataCell(Text('2')),
+              //               DataCell(Text('Competitive Analysis...')),
+              //               DataCell(Text('July 25, 2024')),
+              //               DataCell(Text('July 25, 2024')),
+              //               DataCell(Text('Progress', style: TextStyle(color: Colors.blue))),
+              //               DataCell(Text('Progress', style: TextStyle(color: Colors.blue))),
+              //               DataCell(ElevatedButton(onPressed: () {}, child: Text('Upload'))),
+              //             ]),
+              //           ],
+              //         ),
+              //       ),
+              //     ),
+              //   ),
+              // ),
             ],
           ),
         ),

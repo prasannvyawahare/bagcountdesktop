@@ -14,7 +14,13 @@ class MasterScreen extends StatefulWidget {
 
 class _MasterScreenState extends State<MasterScreen> {
   int _selectedIndex = 0;
-
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    // sqfliteFfiInit();
+    // databaseFactory = databaseFactoryFfi;
+  }
   final List<Widget> _screens = [
     ShiftSettingScreen(),
     ProductScreen(),

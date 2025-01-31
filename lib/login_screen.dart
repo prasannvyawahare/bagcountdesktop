@@ -1,231 +1,160 @@
-import 'package:bagreportun/util/app_color.dart';
+import 'package:bagreportun/SQLite/database_helper.dart';
+import 'package:bagreportun/master_screen.dart';
+//import 'package:bagreportun/model/user.dart';
 import 'package:flutter/material.dart';
+//import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+  const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  _LoginScreenState createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+//  late DatabaseHelper handler;
+  final String _errorMessage = '';
+  bool _isPasswordVisible = false;
+ // final db = DatabaseHelper();
+
+  @override
+  void initState() {
+    WidgetsFlutterBinding.ensureInitialized();
+   // sqfliteFfiInit();
+    //databaseFactory = databaseFactoryFfi;
+   // handler = db;
+    super.initState();
+  }
+
+  _login() async {
+    String username = _usernameController.text;
+    String password = _passwordController.text;
+    if (username == "admin" && password == "1234") {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const MasterScreen()),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    double height = MediaQuery.of(context).size.height;
-    double width = MediaQuery.of(context).size.width;
     return Scaffold(
-      backgroundColor: AppColors.backColor,
-      body: SizedBox(
-        height: height,
-        width: width,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            // Left side - Branding Image (2:3 ratio)
-            ResponsiveWidget.isSmallScreen(context)
-                ? const SizedBox()
-                : Expanded(
-              flex: 2,
-              child: Container(
-                height: height,
-                color: AppColors.mainBlueColor,
-                child: Center(
-                  child: Text(
-                    'AdminExpress', // Branding Text
-                    style: ralewayStyle.copyWith(
-                      fontSize: 48.0,
-                      color: AppColors.whiteColor,
-                      fontWeight: FontWeight.w800,
+      backgroundColor: Colors.blue[100],
+      body: Row(
+        children: [
+          // Left side - Branding Image (2:3 ratio)
+          Expanded(
+            flex: 2,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.blue,
+
+              ),
+            ),
+          ),
+          // Right side - Login Content (3:3 ratio)
+          Expanded(
+            flex: 3,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.white.withOpacity(0.5),
+                    spreadRadius: 5,
+                    blurRadius: 7,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              margin: EdgeInsets.symmetric(horizontal: 100,vertical: 100),
+              child: Padding(
+                padding: const EdgeInsets.all(18.0),
+                child: Card(
+                  elevation: 8,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Login',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 20),
+                          Container(
+                            width: 300,
+                            child: TextField(
+                              controller: _usernameController,
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(),
+                                labelText: 'Username',
+                                errorText: _errorMessage.isEmpty ? null : _errorMessage,
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 20),
+                          Container(
+                            width: 300,
+                            child: TextField(
+                              controller: _passwordController,
+                              obscureText: !_isPasswordVisible, // Toggle password visibility
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(),
+                                labelText: 'Password',
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _isPasswordVisible = !_isPasswordVisible; // Toggle the visibility
+                                    });
+                                  },
+                                ),
+                              ),
+                            )
+                          ),
+                          SizedBox(height: 30),
+                          ElevatedButton(
+                            onPressed: () {
+                              _login();
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              padding: EdgeInsets.symmetric(horizontal: 100, vertical: 16),
+                            ),
+                            child: Text("Submit", style: TextStyle(color: Colors.white)),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              // Add your forget password action here
+                            },
+                            child: Text('Forgot Username/Password?'),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-            // Right side - Login Form (3:3 ratio)
-            Expanded(
-              flex: 3,
-              child: Container(
-                height: height,
-                margin: EdgeInsets.symmetric(
-                  horizontal: ResponsiveWidget.isSmallScreen(context)
-                      ? height * 0.032
-                      : height * 0.12,
-                ),
-                color: AppColors.backColor,
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.only(bottom: 40.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      SizedBox(height: height * 0.2),
-                      RichText(
-                        text: TextSpan(
-                          children: [
-                            TextSpan(
-                              text: 'Let’s',
-                              style: ralewayStyle.copyWith(
-                                fontSize: 25.0,
-                                color: AppColors.blueDarkColor,
-                                fontWeight: FontWeight.normal,
-                              ),
-                            ),
-                            TextSpan(
-                              text: ' Sign In 👇',
-                              style: ralewayStyle.copyWith(
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.blueDarkColor,
-                                fontSize: 25.0,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(height: height * 0.02),
-                      Text(
-                        'Hey, Enter your details to get sign in \nto your account.',
-                        style: ralewayStyle.copyWith(
-                          fontSize: 12.0,
-                          fontWeight: FontWeight.w400,
-                          color: AppColors.textColor,
-                        ),
-                      ),
-                      SizedBox(height: height * 0.064),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 16.0),
-                        child: Text(
-                          'Email',
-                          style: ralewayStyle.copyWith(
-                            fontSize: 12.0,
-                            color: AppColors.blueDarkColor,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 6.0),
-                      Container(
-                        height: 50.0,
-                        width: width,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16.0),
-                          color: AppColors.whiteColor,
-                        ),
-                        child: TextFormField(
-                          style: ralewayStyle.copyWith(
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.blueDarkColor,
-                            fontSize: 12.0,
-                          ),
-                          decoration: InputDecoration(
-                            border: InputBorder.none,
-                            prefixIcon: IconButton(
-                              onPressed: () {},
-                              icon: Image.asset(AppIcons.emailIcon),
-                            ),
-                            contentPadding: const EdgeInsets.only(top: 16.0),
-                            hintText: 'Enter Email',
-                            hintStyle: ralewayStyle.copyWith(
-                              fontWeight: FontWeight.w400,
-                              color: AppColors.blueDarkColor.withOpacity(0.5),
-                              fontSize: 12.0,
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: height * 0.014),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 16.0),
-                        child: Text(
-                          'Password',
-                          style: ralewayStyle.copyWith(
-                            fontSize: 12.0,
-                            color: AppColors.blueDarkColor,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 6.0),
-                      Container(
-                        height: 50.0,
-                        width: width,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16.0),
-                          color: AppColors.whiteColor,
-                        ),
-                        child: TextFormField(
-                          style: ralewayStyle.copyWith(
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.blueDarkColor,
-                            fontSize: 12.0,
-                          ),
-                          obscureText: true,
-                          decoration: InputDecoration(
-                            border: InputBorder.none,
-                            suffixIcon: IconButton(
-                              onPressed: () {},
-                              icon: Image.asset(AppIcons.eyeIcon),
-                            ),
-                            prefixIcon: IconButton(
-                              onPressed: () {},
-                              icon: Image.asset(AppIcons.lockIcon),
-                            ),
-                            contentPadding: const EdgeInsets.only(top: 16.0),
-                            hintText: 'Enter Password',
-                            hintStyle: ralewayStyle.copyWith(
-                              fontWeight: FontWeight.w400,
-                              color: AppColors.blueDarkColor.withOpacity(0.5),
-                              fontSize: 12.0,
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: height * 0.03),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: () {},
-                          child: Text(
-                            'Forgot Password?',
-                            style: ralewayStyle.copyWith(
-                              fontSize: 12.0,
-                              color: AppColors.mainBlueColor,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: height * 0.05),
-                      Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () {},
-                          borderRadius: BorderRadius.circular(16.0),
-                          child: Ink(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 70.0, vertical: 18.0),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(16.0),
-                              color: AppColors.mainBlueColor,
-                            ),
-                            child: Text(
-                              'Sign In',
-                              style: ralewayStyle.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.whiteColor,
-                                fontSize: 16.0,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

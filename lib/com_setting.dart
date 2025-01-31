@@ -1,3 +1,8 @@
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:bagreportun/model/reading.dart';
+import 'package:bagreportun/repository/reading_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_libserialport/flutter_libserialport.dart';
 
@@ -9,13 +14,19 @@ class ComSetting extends StatefulWidget {
 }
 
 class _ComSettingState extends State<ComSetting> {
-  final TextEditingController baudRateController = TextEditingController(text: "4800");
+  final TextEditingController baudRateController = TextEditingController(text: "9600");
   final TextEditingController dataBitsController = TextEditingController(text: "8");
   final TextEditingController parityController = TextEditingController(text: "None");
   final TextEditingController stopBitsController = TextEditingController(text: "1");
-
+  final ReadingRepository _readingRepository = ReadingRepository();
   late SerialPort _serialPort;
+  List<Reading> readings = [];
+  String _buffer = ''; // Temporary buffer to hold incomplete data
+  String newReading="No data Found" ;
+        @override
+ late Timer timer;
   String? selectedPort;
+  bool isConnect=false;
   List<String> availablePorts = [];
 
   @override
@@ -24,13 +35,17 @@ class _ComSettingState extends State<ComSetting> {
     _fetchAvailablePorts();
   }
 
+
   @override
   void dispose() {
     // Close the port when the widget is disposed
     _serialPort.close();
     super.dispose();
   }
-
+  void readDataFromDB() async {
+    readings = await _readingRepository.getAllReadings();
+    print(readings);
+  }
   // Fetch available ports
   Future<void> _fetchAvailablePorts() async {
     List<String> ports = SerialPort.availablePorts;
@@ -51,7 +66,7 @@ class _ComSettingState extends State<ComSetting> {
       return;
     }
 
-    int baudRate = int.tryParse(baudRateController.text) ?? 4800;
+    int baudRate = int.tryParse(baudRateController.text) ?? 9600;
     int dataBits = int.tryParse(dataBitsController.text) ?? 8;
     String parity = parityController.text;
     int stopBits = int.tryParse(stopBitsController.text) ?? 1;
@@ -66,9 +81,50 @@ class _ComSettingState extends State<ComSetting> {
         _serialPort.config.bits = dataBits;
         _serialPort.config.parity = _getParity(parity);
         _serialPort.config.stopBits = stopBits;
+        _serialPort.config.setFlowControl(SerialPortFlowControl.none);
 
+        setState(() {
+          isConnect = true;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Connected to $selectedPort')),
+          SnackBar(content: Text('Connected to $_serialPort')),
+        );
+
+        // Buffer to accumulate data
+        String _buffer = '';
+
+        // Start reading data from the serial port
+        final reader = SerialPortReader(_serialPort);
+        reader.stream.listen(
+              (data) {
+            // Convert received data to a string and append to the buffer
+            String receivedData = String.fromCharCodes(data);
+            _buffer += receivedData;
+
+            // Check if the message starts with `*`
+            if (_buffer.startsWith('*')) {
+              // Process the complete buffer as the message
+              setState(() {
+                newReading = _buffer;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Received Data: $newReading')),
+                );
+                _saveToDatabase(newReading); // Save the complete message to the database
+              });
+
+              // Clear the buffer after processing
+              _buffer = '';
+            }
+          },
+          onError: (error) {
+            setState(() {
+              isConnect = false;
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error reading from serial port: $error')),
+            );
+            print('Error reading from serial port: $error');
+          },
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -77,6 +133,25 @@ class _ComSettingState extends State<ComSetting> {
       }
     }
   }
+
+
+
+// Example function to save data to the database
+  void _saveToDatabase(String data) async {
+    // Assuming you have a SQLite database instance `db` and a table named `readings`
+    final reading=Reading(
+      value: data,
+      timestamp: DateTime.now().toIso8601String(),
+    );
+    await _readingRepository.insertReading(reading);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('data added successfully from port $selectedPort')),
+    );
+    print('Data saved to database: $data');
+    readDataFromDB();
+  }
+
+
 
   // Function to map string parity value to SerialPortParity
   int _getParity(String parity) {
@@ -88,6 +163,20 @@ class _ComSettingState extends State<ComSetting> {
       case 'none':
       default:
         return SerialPortParity.none;
+    }
+  }
+ // Function to map string parity value to SerialPortParity
+  int _getFlowController(String flowController) {
+    switch (flowController.toLowerCase()) {
+      case 'dtrDsr':
+        return SerialPortFlowControl.dtrDsr;
+      case 'rtsCts':
+        return SerialPortFlowControl.rtsCts;
+       case 'xonXoff':
+        return SerialPortFlowControl.xonXoff;
+      case 'none':
+      default:
+        return SerialPortFlowControl.none;
     }
   }
 
@@ -127,23 +216,61 @@ class _ComSettingState extends State<ComSetting> {
                   _buildTextField("Parity", parityController),
                   const SizedBox(height: 16),
                   _buildTextField("Stop Bits", stopBitsController),
+                  Text(newReading,) ,
                   const Spacer(),
                   Center(
-                    child: Container(
-                      width: 150,
-                      child: ElevatedButton(
-                        onPressed: _connectSerialPort,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 150,
+                          child: ElevatedButton(
+                            onPressed: _connectSerialPort,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                            ),
+                            child: Text("Connect", style: TextStyle(color: Colors.white)),
                           ),
-                          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                         ),
-                        child: Text("SAVE", style: TextStyle(color: Colors.white)),
-                      ),
+                        SizedBox(width: 16),
+
+                      ],
                     ),
                   ),
+                  isConnect?
+                  Container(
+                    width: 150,
+                    child: ElevatedButton(
+                      onPressed: _connectSerialPort,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                      ),
+                      child: Text("Disconnect", style: TextStyle(color: Colors.white)),
+                    ),
+                  ):SizedBox(),
+                  // readings.length>0?Container(
+                  //   height: 300,
+                  //   child: ListView.builder(
+                  //     itemCount: readings.length,
+                  //     itemBuilder: (context, index) {
+                  //       return ListTile(
+                  //         title: Text(readings[index].value.toString()),
+                  //       );
+                  //     },
+                  //   ),
+                  // ):Container(
+                  //   child: Center(
+                  //     child: Text("No Data Found"),
+                  //   ),
+                  // ),
                 ],
               ),
             ),

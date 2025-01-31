@@ -3,14 +3,14 @@ class Product {
   String name;
   String description;
   String brand;
-  double value;
+  double brand_code;
 
   Product({
     this.id,
     required this.name,
     required this.description,
     required this.brand,
-    required this.value,
+    required this.brand_code,
   });
 
   // Convert Product to Map
@@ -20,7 +20,7 @@ class Product {
       'name': name,
       'description': description,
       'brand': brand,
-      'value': value,
+      'value': brand_code,
     };
   }
 
@@ -31,7 +31,7 @@ class Product {
       name: map['name'],
       description: map['description'],
       brand: map['brand'],
-      value: map['value'],
+      brand_code: map['value'],
     );
   }
 }

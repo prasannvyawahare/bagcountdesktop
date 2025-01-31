@@ -1,7 +1,6 @@
 import 'package:bagreportun/repository/shift_repository.dart';
 import 'package:flutter/material.dart';
 import 'model/shift.dart';
-import 'SQLite/database_helper.dart';
 
 class ShiftSettingScreen extends StatefulWidget {
   const ShiftSettingScreen({super.key});
@@ -19,6 +18,7 @@ class _ShiftSettingScreenState extends State<ShiftSettingScreen> {
   final TextEditingController _endTimeController = TextEditingController();
 
   late Future<List<Shift>> _shiftList;
+  bool _isAddShiftExpanded = false; // For controlling expansion of "Add Shift" card
 
   @override
   void initState() {
@@ -49,7 +49,9 @@ class _ShiftSettingScreenState extends State<ShiftSettingScreen> {
 
     // Reload shifts after adding
     _loadShifts();
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Shift added successfully")));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Shift added successfully")),
+    );
   }
 
   // Function to show time picker dialog and update the controller with selected time
@@ -59,7 +61,7 @@ class _ShiftSettingScreenState extends State<ShiftSettingScreen> {
       initialTime: TimeOfDay.now(),
     );
     if (time != null) {
-      controller.text = time.format(context);  // Update text controller with selected time
+      controller.text = time.format(context); // Update text controller with selected time
     }
   }
 
@@ -68,9 +70,35 @@ class _ShiftSettingScreenState extends State<ShiftSettingScreen> {
     bool confirmDelete = await _showDeleteDialog(context);
     if (confirmDelete) {
       await _shiftRepository.deleteShift(shiftId);
-      _loadShifts();  // Reload shifts after deletion
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Shift deleted successfully")));
+      _loadShifts(); // Reload shifts after deletion
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Shift deleted successfully")),
+      );
     }
+  }
+
+  // Function to show delete confirmation dialog
+  Future<bool> _showDeleteDialog(BuildContext context) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Delete Shift'),
+          content: const Text('Are you sure you want to delete this shift?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+    return result ?? false;
   }
 
   @override
@@ -93,28 +121,63 @@ class _ShiftSettingScreenState extends State<ShiftSettingScreen> {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              // New shift input form
-              Card(
-                color: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                elevation: 8,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      _buildTextField('Shift Name', _shiftNameController),
-                      const SizedBox(height: 10),
-                      _buildTimeField('Start Time', _startTimeController),
-                      const SizedBox(height: 10),
-                      _buildTimeField('End Time', _endTimeController),
-                      const SizedBox(height: 20),
-                      ElevatedButton(
-                        onPressed: _addShift,
-                        child: const Text("Add Shift"),
+              // New shift input form as an ExpansionPanel
+              ExpansionPanelList(
+                elevation: 1,
+                expandedHeaderPadding: EdgeInsets.zero,
+                expansionCallback: (int index, bool isExpanded) {
+                  setState(() {
+                    _isAddShiftExpanded = !_isAddShiftExpanded;
+                  });
+                },
+                children: [
+                  ExpansionPanel(
+                    canTapOnHeader: true,
+                    isExpanded: _isAddShiftExpanded,
+                    headerBuilder: (context, isExpanded) {
+                      return const ListTile(
+                        title: Text(
+                          "Add New Shift",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      );
+                    },
+                    body: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                       // borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.5),
+                            spreadRadius: 2,
+                            blurRadius: 5,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
                       ),
-                    ],
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          children: [
+                            _buildTextField('Shift Name', _shiftNameController),
+                            const SizedBox(height: 10),
+                            _buildTimeField('Start Time', _startTimeController),
+                            const SizedBox(height: 10),
+                            _buildTimeField('End Time', _endTimeController),
+                            const SizedBox(height: 20),
+                            ElevatedButton(
+                              onPressed: _addShift,
+                              child: const Text("Add Shift"),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
 
               const SizedBox(height: 20),
@@ -132,13 +195,13 @@ class _ShiftSettingScreenState extends State<ShiftSettingScreen> {
                   future: _shiftList,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Center(child: CircularProgressIndicator());
+                      return const Center(child: CircularProgressIndicator());
                     } else if (snapshot.hasError) {
                       return Center(child: Text('Error: ${snapshot.error}'));
                     } else if (snapshot.hasData) {
                       final shifts = snapshot.data!;
                       if (shifts.isEmpty) {
-                        return Center(child: Text("No shifts available"));
+                        return const Center(child: Text("No shifts available"));
                       }
                       return ListView.builder(
                         itemCount: shifts.length,
@@ -160,7 +223,7 @@ class _ShiftSettingScreenState extends State<ShiftSettingScreen> {
                         },
                       );
                     } else {
-                      return Center(child: Text("No shifts available"));
+                      return const Center(child: Text("No shifts available"));
                     }
                   },
                 ),
@@ -193,7 +256,7 @@ class _ShiftSettingScreenState extends State<ShiftSettingScreen> {
   // Reusable method for building time picker fields
   Widget _buildTimeField(String label, TextEditingController controller) {
     return GestureDetector(
-      onTap: () => _selectTime(controller),  // Trigger time picker on tap
+      onTap: () => _selectTime(controller), // Trigger time picker on tap
       child: AbsorbPointer(
         child: TextField(
           controller: controller,
@@ -211,30 +274,5 @@ class _ShiftSettingScreenState extends State<ShiftSettingScreen> {
         ),
       ),
     );
-  }
-
-  // Function to show delete confirmation dialog
-  Future<bool> _showDeleteDialog(BuildContext context) async {
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Delete Shift'),
-          content: const Text('Are you sure you want to delete this shift?'),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Delete'),
-            ),
-          ],
-        );
-      },
-    );
-
-    return result ?? false;
   }
 }

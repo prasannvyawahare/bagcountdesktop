@@ -53,6 +53,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
+  msix: ^3.16.8
 
 
 # For information on the generic Dart part of this file, see the
@@ -71,6 +72,8 @@ flutter:
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 
+assets:
+  - images/bagcount.png
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 
@@ -93,6 +96,16 @@ flutter:
   #       - asset: fonts/TrajanPro.ttf
   #       - asset: fonts/TrajanPro_Bold.ttf
   #         weight: 700
+
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+#msix_config:
+#  display_name: "BagCount Software"
+#  publisher_display_name: "Sateroid Innovation"
+#  identity_name: "com.example.bagreportun"
+#  msix_version: "1.0.0.0"
+#  capabilities: "internetClient"
+#  logo_path: "images/bagcount.png"
+#  certificate_path: "cert/your_certificate.pfx"
+#  certificate_password: "your_certificate_password"
