@@ -46,6 +46,7 @@ class _ComSettingState extends State<ComSetting> {
     readings = await _readingRepository.getAllReadings();
     print(readings);
   }
+
   // Fetch available ports
   Future<void> _fetchAvailablePorts() async {
     List<String> ports = SerialPort.availablePorts;
@@ -101,6 +102,12 @@ class _ComSettingState extends State<ComSetting> {
             String receivedData = String.fromCharCodes(data);
             _buffer += receivedData;
 
+            setState(() {
+              newReading = _buffer;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Received Data: $newReading')),
+              );
+            });
             // Check if the message starts with `*`
             if (_buffer.startsWith('*')) {
               // Process the complete buffer as the message
