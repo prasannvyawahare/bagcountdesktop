@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:bagreportun/model/reading.dart';
+import 'package:bagreportun/repository/port_repository.dart';
 import 'package:bagreportun/repository/reading_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_libserialport/flutter_libserialport.dart';
@@ -14,19 +15,24 @@ class ComSetting extends StatefulWidget {
 }
 
 class _ComSettingState extends State<ComSetting> {
-  final TextEditingController baudRateController = TextEditingController(text: "9600");
-  final TextEditingController dataBitsController = TextEditingController(text: "8");
-  final TextEditingController parityController = TextEditingController(text: "None");
-  final TextEditingController stopBitsController = TextEditingController(text: "1");
+  final TextEditingController baudRateController =
+      TextEditingController(text: "9600");
+  final TextEditingController dataBitsController =
+      TextEditingController(text: "8");
+  final TextEditingController parityController =
+      TextEditingController(text: "None");
+  final TextEditingController stopBitsController =
+      TextEditingController(text: "1");
   final ReadingRepository _readingRepository = ReadingRepository();
   late SerialPort _serialPort;
   List<Reading> readings = [];
+  final portRepo = PortRepository();
   String _buffer = ''; // Temporary buffer to hold incomplete data
-  String newReading="No data Found" ;
-        @override
- late Timer timer;
+  String newReading = "No data Found";
+  @override
+  late Timer timer;
   String? selectedPort;
-  bool isConnect=false;
+  bool isConnect = false;
   List<String> availablePorts = [];
 
   @override
@@ -35,13 +41,13 @@ class _ComSettingState extends State<ComSetting> {
     _fetchAvailablePorts();
   }
 
-
   @override
   void dispose() {
     // Close the port when the widget is disposed
     _serialPort.close();
     super.dispose();
   }
+
   void readDataFromDB() async {
     readings = await _readingRepository.getAllReadings();
     print(readings);
@@ -59,7 +65,7 @@ class _ComSettingState extends State<ComSetting> {
   }
 
   // Function to connect to the selected serial port
-  void _connectSerialPort() {
+  void _connectSerialPort()  {
     if (selectedPort == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('No port selected')),
@@ -84,8 +90,20 @@ class _ComSettingState extends State<ComSetting> {
         _serialPort.config.stopBits = stopBits;
         _serialPort.config.setFlowControl(SerialPortFlowControl.none);
 
-        setState(() {
+        setState(() async {
           isConnect = true;
+          // final newPort = {
+          //   'port_name': selectedPort,
+          //   'baud_rate':  _serialPort.config.baudRate,
+          //   'data_bits':  _serialPort.config.bits,
+          //   'parity':  _serialPort.config.parity,
+          //   'stop_bits':_serialPort.config.stopBits,
+          //   'is_connect':true
+          // };
+          //
+          // // Insert a new port
+          // int portId = await portRepo.insertPort(newPort);
+          // print('Inserted Port ID: $portId');
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Connected to $_serialPort')),
@@ -97,26 +115,24 @@ class _ComSettingState extends State<ComSetting> {
         // Start reading data from the serial port
         final reader = SerialPortReader(_serialPort);
         reader.stream.listen(
-              (data) {
+          (data) {
             // Convert received data to a string and append to the buffer
             String receivedData = String.fromCharCodes(data);
             _buffer += receivedData;
 
-            setState(() {
-              newReading = _buffer;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Received Data: $newReading')),
-              );
-            });
-            // Check if the message starts with `*`
+            // Process data when the buffer starts with *
             if (_buffer.startsWith('*')) {
-              // Process the complete buffer as the message
+              int index = _buffer.indexOf('*');
+              String message = _buffer.substring(0, index);
+              _buffer = _buffer.substring(index + 1);
+
               setState(() {
-                newReading = _buffer;
+                newReading = message;
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Received Data: $newReading')),
                 );
-                _saveToDatabase(newReading); // Save the complete message to the database
+                _saveToDatabase(
+                    newReading); // Save the complete message to the database
               });
 
               // Clear the buffer after processing
@@ -124,6 +140,7 @@ class _ComSettingState extends State<ComSetting> {
             }
           },
           onError: (error) {
+            _serialPort.close();
             setState(() {
               isConnect = false;
             });
@@ -141,24 +158,33 @@ class _ComSettingState extends State<ComSetting> {
     }
   }
 
-
-
 // Example function to save data to the database
   void _saveToDatabase(String data) async {
     // Assuming you have a SQLite database instance `db` and a table named `readings`
-    final reading=Reading(
+    final reading = Reading(
       value: data,
       timestamp: DateTime.now().toIso8601String(),
     );
     await _readingRepository.insertReading(reading);
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('data added successfully from port $selectedPort')),
+      SnackBar(
+          content: Text('data added successfully from port $selectedPort')),
     );
     print('Data saved to database: $data');
     readDataFromDB();
   }
-
-
+  void _disconnectSerialPort() {
+    if (_serialPort.isOpen) {
+      _serialPort.close();
+    }
+    setState(() {
+      isConnect = false;
+      readings.clear();
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Disconnected from $selectedPort')),
+    );
+  }
 
   // Function to map string parity value to SerialPortParity
   int _getParity(String parity) {
@@ -172,14 +198,15 @@ class _ComSettingState extends State<ComSetting> {
         return SerialPortParity.none;
     }
   }
- // Function to map string parity value to SerialPortParity
+
+  // Function to map string parity value to SerialPortParity
   int _getFlowController(String flowController) {
     switch (flowController.toLowerCase()) {
       case 'dtrDsr':
         return SerialPortFlowControl.dtrDsr;
       case 'rtsCts':
         return SerialPortFlowControl.rtsCts;
-       case 'xonXoff':
+      case 'xonXoff':
         return SerialPortFlowControl.xonXoff;
       case 'none':
       default:
@@ -206,7 +233,8 @@ class _ComSettingState extends State<ComSetting> {
           padding: const EdgeInsets.all(16.0),
           child: Card(
             color: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             elevation: 8,
             child: Padding(
               padding: const EdgeInsets.all(20.0),
@@ -223,7 +251,9 @@ class _ComSettingState extends State<ComSetting> {
                   _buildTextField("Parity", parityController),
                   const SizedBox(height: 16),
                   _buildTextField("Stop Bits", stopBitsController),
-                  Text(newReading,) ,
+                  Text(
+                    newReading,
+                  ),
                   const Spacer(),
                   Center(
                     child: Row(
@@ -238,31 +268,35 @@ class _ComSettingState extends State<ComSetting> {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 24, vertical: 16),
                             ),
-                            child: Text("Connect", style: TextStyle(color: Colors.white)),
+                            child: Text("Connect",
+                                style: TextStyle(color: Colors.white)),
                           ),
                         ),
                         SizedBox(width: 16),
-
                       ],
                     ),
                   ),
-                  isConnect?
-                  Container(
-                    width: 150,
-                    child: ElevatedButton(
-                      onPressed: _connectSerialPort,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                      ),
-                      child: Text("Disconnect", style: TextStyle(color: Colors.white)),
-                    ),
-                  ):SizedBox(),
+                  isConnect
+                      ? Container(
+                          width: 150,
+                          child: ElevatedButton(
+                            onPressed: _connectSerialPort,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 24, vertical: 16),
+                            ),
+                            child: Text("Disconnect",
+                                style: TextStyle(color: Colors.white)),
+                          ),
+                        )
+                      : SizedBox(),
                   // readings.length>0?Container(
                   //   height: 300,
                   //   child: ListView.builder(
@@ -333,7 +367,8 @@ class _ComSettingState extends State<ComSetting> {
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             ),
             style: const TextStyle(fontSize: 16),
           ),

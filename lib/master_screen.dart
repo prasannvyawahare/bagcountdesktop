@@ -1,4 +1,5 @@
 import 'package:bagreportun/product_screen.dart';
+import 'package:bagreportun/profile_screen.dart';
 import 'package:bagreportun/shift_setting_screen.dart';
 import 'package:bagreportun/vew_report_screen.dart';
 import 'package:flutter/material.dart';
@@ -22,11 +23,11 @@ class _MasterScreenState extends State<MasterScreen> {
     // databaseFactory = databaseFactoryFfi;
   }
   final List<Widget> _screens = [
+    ComSetting(),
     ShiftSettingScreen(),
     ProductScreen(),
-    ComSetting(),
     VewReportScreen (),
-    VewReportScreen (),
+    ProfileScreen (userId: '1', softwareVersion: '3',),
   ];
 
   @override
@@ -94,7 +95,7 @@ class _MasterScreenState extends State<MasterScreen> {
                 ),
                 ListTile(
                   selected: _selectedIndex == 4,
-                  leading: Icon(Icons.report, color: _selectedIndex == 4 ? Colors.blue : Colors.black),
+                  leading: Icon(Icons.person, color: _selectedIndex == 4 ? Colors.blue : Colors.black),
                   title: Text('Profile',style: TextStyle( color: _selectedIndex == 4 ? Colors.blue : Colors.black)),
                   onTap: () {
                     setState(() {
