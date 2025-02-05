@@ -29,13 +29,14 @@ class DatabaseHelper {
       version: 1,
       onCreate: (db, version) async {
         await db.execute('''
-          CREATE TABLE Port (
+            CREATE TABLE Port (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             port_name TEXT NOT NULL,
             baud_rate INTEGER NOT NULL,
             data_bits INTEGER NOT NULL,
             parity TEXT NOT NULL,
-            stop_bits INTEGER NOT NULL
+            stop_bits INTEGER NOT NULL,
+            is_connect INTEGER NOT NULL DEFAULT 0
           );
         ''');
 

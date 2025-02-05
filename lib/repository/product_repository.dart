@@ -9,6 +9,7 @@ class ProductRepository {
   // Create a new product
   Future<int> insertProduct(Product product) async {
     final db = await _databaseHelper.database;
+
     return await db.insert(
       'Product',
       product.toMap(),

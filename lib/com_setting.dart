@@ -90,20 +90,9 @@ class _ComSettingState extends State<ComSetting> {
         _serialPort.config.stopBits = stopBits;
         _serialPort.config.setFlowControl(SerialPortFlowControl.none);
 
-        setState(() async {
+        setState(()  {
           isConnect = true;
-          // final newPort = {
-          //   'port_name': selectedPort,
-          //   'baud_rate':  _serialPort.config.baudRate,
-          //   'data_bits':  _serialPort.config.bits,
-          //   'parity':  _serialPort.config.parity,
-          //   'stop_bits':_serialPort.config.stopBits,
-          //   'is_connect':true
-          // };
-          //
-          // // Insert a new port
-          // int portId = await portRepo.insertPort(newPort);
-          // print('Inserted Port ID: $portId');
+
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Connected to $_serialPort')),
@@ -119,25 +108,12 @@ class _ComSettingState extends State<ComSetting> {
             // Convert received data to a string and append to the buffer
             String receivedData = String.fromCharCodes(data);
             _buffer += receivedData;
-
-            // Process data when the buffer starts with *
-            if (_buffer.startsWith('*')) {
-              int index = _buffer.indexOf('*');
-              String message = _buffer.substring(0, index);
-              _buffer = _buffer.substring(index + 1);
-
-              setState(() {
-                newReading = message;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Received Data: $newReading')),
-                );
-                _saveToDatabase(
-                    newReading); // Save the complete message to the database
-              });
-
-              // Clear the buffer after processing
-              _buffer = '';
-            }
+            setState(() {
+              newReading = _buffer;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Received Data: $newReading')),
+              );
+            });
           },
           onError: (error) {
             _serialPort.close();
@@ -283,7 +259,7 @@ class _ComSettingState extends State<ComSetting> {
                       ? Container(
                           width: 150,
                           child: ElevatedButton(
-                            onPressed: _connectSerialPort,
+                            onPressed: _disconnectSerialPort,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.blue,
                               shape: RoundedRectangleBorder(

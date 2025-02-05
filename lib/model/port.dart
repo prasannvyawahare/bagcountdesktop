@@ -2,9 +2,9 @@ class Port {
   final String portName;
   final int baudRate;
   final int dataBits;
-  final String parity;
+  final int parity;
   final int stopBits;
-  final bool isConnect;
+  final int isConnect;
 
   Port({
     required this.portName,
