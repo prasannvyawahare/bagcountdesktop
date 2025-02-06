@@ -55,8 +55,8 @@ class _MasterScreenState extends State<MasterScreen> {
                 ),
                 ListTile(
                   selected: _selectedIndex == 0,
-                  leading: Icon(Icons.filter_tilt_shift, color: _selectedIndex == 0 ? Colors.blue : Colors.black),
-                  title: Text('Shift Setting',style: TextStyle( color: _selectedIndex == 0 ? Colors.blue : Colors.black)),
+                  leading: Icon(Icons.confirmation_num_outlined, color: _selectedIndex == 0 ? Colors.blue : Colors.black),
+                  title: Text('Port',style: TextStyle( color: _selectedIndex == 0 ? Colors.blue : Colors.black)),
                   onTap: () {
                     setState(() {
                       _selectedIndex = 0;
@@ -65,8 +65,8 @@ class _MasterScreenState extends State<MasterScreen> {
                 ),
                 ListTile(
                   selected: _selectedIndex == 1,
-                  leading: Icon(Icons.computer, color: _selectedIndex == 1 ? Colors.blue : Colors.black),
-                  title: Text('Brand',style: TextStyle( color: _selectedIndex == 1 ? Colors.blue : Colors.black)),
+                  leading:Icon(Icons.filter_tilt_shift, color: _selectedIndex == 1 ? Colors.blue : Colors.black),
+                  title: Text('Shift',style: TextStyle( color: _selectedIndex == 1 ? Colors.blue : Colors.black)),
                   onTap: () {
                     setState(() {
                       _selectedIndex = 1;
@@ -75,8 +75,8 @@ class _MasterScreenState extends State<MasterScreen> {
                 ),
                 ListTile(
                   selected: _selectedIndex == 2,
-                  leading: Icon(Icons.security_rounded, color: _selectedIndex == 2 ? Colors.blue : Colors.black),
-                  title: Text('Serial Port',style: TextStyle( color: _selectedIndex == 2 ? Colors.blue : Colors.black)),
+                  leading: Icon(Icons.computer, color: _selectedIndex == 2 ? Colors.blue : Colors.black),
+                  title: Text('Product',style: TextStyle( color: _selectedIndex == 2 ? Colors.blue : Colors.black)),
                   onTap: () {
                     setState(() {
                       _selectedIndex = 2;
@@ -85,7 +85,7 @@ class _MasterScreenState extends State<MasterScreen> {
                 ),
                 ListTile(
                   selected: _selectedIndex == 3,
-                  leading: Icon(Icons.report, color: _selectedIndex == 3 ? Colors.blue : Colors.black),
+                  leading: Icon(Icons.account_balance_wallet_rounded, color: _selectedIndex == 3 ? Colors.blue : Colors.black),
                   title: Text('View Report',style: TextStyle( color: _selectedIndex == 3 ? Colors.blue : Colors.black)),
                   onTap: () {
                     setState(() {
