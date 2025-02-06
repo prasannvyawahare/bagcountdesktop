@@ -61,7 +61,7 @@ class _VewReportScreenState extends State<VewReportScreen> {
 
    void readDataFromDB() async {
      readings = await _readingRepository.getAllReadings();
-     print(readings);
+     print("readings ${readings.length}");
      setState(() {
 
      });
@@ -453,7 +453,6 @@ class _VewReportScreenState extends State<VewReportScreen> {
                   "Reset Filter",
                   style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold,color: Colors.red[700]),
                 ),
-
               ],),
               SizedBox(height: 20),
               readings.length>0?Container(

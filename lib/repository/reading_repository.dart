@@ -9,11 +9,15 @@ class ReadingRepository {
   // Create a new reading
   Future<int> insertReading(Reading reading) async {
     final db = await _databaseHelper.database;
-    return await db.insert(
-      'Reading',
-      reading.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
+    // return await db.insert(
+    //   'Reading',
+    //   reading.toMap(),
+    // );
+    return await db.rawInsert(
+      'INSERT INTO Reading(timestamp, value,unit) VALUES(?, ?, ?)',
+      [reading.timestamp, reading.value, reading.unit],
     );
+    //return 1;
   }
 
   // Get all readings

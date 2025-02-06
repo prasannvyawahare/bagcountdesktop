@@ -4,6 +4,9 @@ import 'dart:convert';
 import 'package:bagreportun/model/reading.dart';
 import 'package:bagreportun/repository/port_repository.dart';
 import 'package:bagreportun/repository/reading_repository.dart';
+import 'package:bagreportun/util/constant_string.dart';
+import 'package:bagreportun/util/serial_port_service.dart';
+import 'package:bagreportun/util/shared_pref_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_libserialport/flutter_libserialport.dart';
 
@@ -24,7 +27,7 @@ class _ComSettingState extends State<ComSetting> {
   final TextEditingController stopBitsController =
       TextEditingController(text: "1");
   final ReadingRepository _readingRepository = ReadingRepository();
-  late SerialPort _serialPort;
+
   List<Reading> readings = [];
   final portRepo = PortRepository();
   String _buffer = ''; // Temporary buffer to hold incomplete data
@@ -34,17 +37,31 @@ class _ComSettingState extends State<ComSetting> {
   String? selectedPort;
   bool isConnect = false;
   List<String> availablePorts = [];
+  final SerialPortService _serialService = SerialPortService();
 
   @override
   void initState() {
     super.initState();
+    init();
     _fetchAvailablePorts();
+    _listenToSerialData();
+  }
+
+  Future<void> init() async {
+    isConnect = await SharedPrefHelper.getBool(SharedPrefKeys.isConnect)??false;
+    print(isConnect);
+    if (mounted) {
+      setState(() {
+        // Your state update logic here
+      });
+    }
+
   }
 
   @override
   void dispose() {
     // Close the port when the widget is disposed
-    _serialPort.close();
+ //   _serialPort.close();
     super.dispose();
   }
 
@@ -56,82 +73,76 @@ class _ComSettingState extends State<ComSetting> {
   // Fetch available ports
   Future<void> _fetchAvailablePorts() async {
     List<String> ports = SerialPort.availablePorts;
-    setState(() {
-      availablePorts = ports;
-      if (ports.isNotEmpty) {
-        selectedPort = ports[0]; // Select the first port by default
-      }
-    });
+    if (mounted) {
+      setState(() {
+        availablePorts = ports;
+        if (ports.isNotEmpty) {
+          selectedPort = ports[0]; // Select the first port by default
+        }
+      });
+    }
+
   }
 
-  // Function to connect to the selected serial port
-  void _connectSerialPort()  {
+  Future<void> _connectSerialPort() async {
     if (selectedPort == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('No port selected')),
       );
       return;
     }
-
-    int baudRate = int.tryParse(baudRateController.text) ?? 9600;
-    int dataBits = int.tryParse(dataBitsController.text) ?? 8;
-    String parity = parityController.text;
-    int stopBits = int.tryParse(stopBitsController.text) ?? 1;
-
-    // Create and open the selected serial port
-    _serialPort = SerialPort(selectedPort!);
-
-    if (!_serialPort.isOpen) {
-      final opened = _serialPort.openReadWrite();
-      if (opened) {
-        _serialPort.config.baudRate = baudRate;
-        _serialPort.config.bits = dataBits;
-        _serialPort.config.parity = _getParity(parity);
-        _serialPort.config.stopBits = stopBits;
-        _serialPort.config.setFlowControl(SerialPortFlowControl.none);
-
-        setState(()  {
-          isConnect = true;
-
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Connected to $_serialPort')),
-        );
-
-        // Buffer to accumulate data
-        String _buffer = '';
-
-        // Start reading data from the serial port
-        final reader = SerialPortReader(_serialPort);
-        reader.stream.listen(
-          (data) {
-            // Convert received data to a string and append to the buffer
-            String receivedData = String.fromCharCodes(data);
-            _buffer += receivedData;
-            setState(() {
-              newReading = _buffer;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Received Data: $newReading')),
-              );
-            });
-          },
-          onError: (error) {
-            _serialPort.close();
-            setState(() {
-              isConnect = false;
-            });
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error reading from serial port: $error')),
-            );
-            print('Error reading from serial port: $error');
-          },
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to open port $selectedPort')),
-        );
-      }
+    if (isConnect) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Already connected to $selectedPort')),
+      );
+      return;
     }
+    bool isConnected = await _serialService.connectSerialPort(
+      portName: selectedPort!,
+      baudRate: int.tryParse(baudRateController.text) ?? 9600,
+      dataBits: int.tryParse(dataBitsController.text) ?? 8,
+      parity: parityController.text,
+      stopBits: int.tryParse(stopBitsController.text) ?? 1,
+    );
+    print("isConnected : $isConnected");
+    if (isConnected) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Connected to $selectedPort')),
+      );
+      await SharedPrefHelper.saveBool(SharedPrefKeys.isConnect, true);
+      isConnect = true;
+      if (mounted) {
+        setState(() {
+          // Your state update logic here
+        });
+      }
+    //  _navigateToDataScreen();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to open port')),
+      );
+    }
+  }
+
+  void _listenToSerialData() {
+    _serialService.dataStream.listen(
+          (data) async {
+         //
+            if (mounted) {
+              setState(() {
+                newReading="";
+                newReading+= data; // Append new data
+              });
+            }
+
+
+      },
+      onError: (error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.toString())),
+        );
+      },
+    );
   }
 
 // Example function to save data to the database
@@ -139,7 +150,7 @@ class _ComSettingState extends State<ComSetting> {
     // Assuming you have a SQLite database instance `db` and a table named `readings`
     final reading = Reading(
       value: data,
-      timestamp: DateTime.now().toIso8601String(),
+      timestamp: DateTime.now().toIso8601String(),unit: "bay1"
     );
     await _readingRepository.insertReading(reading);
     ScaffoldMessenger.of(context).showSnackBar(
@@ -149,17 +160,26 @@ class _ComSettingState extends State<ComSetting> {
     print('Data saved to database: $data');
     readDataFromDB();
   }
-  void _disconnectSerialPort() {
-    if (_serialPort.isOpen) {
-      _serialPort.close();
-    }
-    setState(() {
-      isConnect = false;
+
+  Future<void> _disconnectSerialPort() async {
+    if (isConnect) {
+      _serialService.disconnect();
+      await SharedPrefHelper.saveBool(SharedPrefKeys.isConnect, false);
+      isConnect = (await SharedPrefHelper.getBool(SharedPrefKeys.isConnect))!;
+
+      print("isConnect: $isConnect");
+      //isConnect = false;
       readings.clear();
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Disconnected from $selectedPort')),
-    );
+      if (mounted) {
+        setState(() {
+          // Your state update logic here
+        });
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Disconnected from $selectedPort')),
+      );
+    }
+
   }
 
   // Function to map string parity value to SerialPortParity
@@ -240,23 +260,20 @@ class _ComSettingState extends State<ComSetting> {
                           child: ElevatedButton(
                             onPressed: _connectSerialPort,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue,
+                              backgroundColor: isConnect?Colors.grey:Colors.blue,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               padding: EdgeInsets.symmetric(
                                   horizontal: 24, vertical: 16),
                             ),
-                            child: Text("Connect",
+                            child: Text(isConnect?"Connected":"Connect",
                                 style: TextStyle(color: Colors.white)),
                           ),
                         ),
                         SizedBox(width: 16),
-                      ],
-                    ),
-                  ),
-                  isConnect
-                      ? Container(
+                        isConnect
+                            ? Container(
                           width: 150,
                           child: ElevatedButton(
                             onPressed: _disconnectSerialPort,
@@ -272,7 +289,11 @@ class _ComSettingState extends State<ComSetting> {
                                 style: TextStyle(color: Colors.white)),
                           ),
                         )
-                      : SizedBox(),
+                            : SizedBox(),
+                      ],
+                    ),
+                  ),
+
                   // readings.length>0?Container(
                   //   height: 300,
                   //   child: ListView.builder(
@@ -336,9 +357,10 @@ class _ComSettingState extends State<ComSetting> {
           width: 180,
           child: TextField(
             controller: controller,
+            enabled: !isConnect,
             decoration: InputDecoration(
               filled: true,
-              fillColor: Colors.grey[200],
+              fillColor: isConnect ? Colors.grey[300] : Colors.grey[200], // Visual cue
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,

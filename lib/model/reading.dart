@@ -2,11 +2,13 @@ class Reading {
   int? id;
   String timestamp;
   String value;
+  String unit;
 
   Reading({
     this.id,
     required this.timestamp,
-    required this.value
+    required this.value,
+    required this.unit
   });
 
   // Convert Reading to Map
@@ -14,7 +16,9 @@ class Reading {
     return {
       'id': id,
       'timestamp': timestamp,
-      'value': value
+      'value': value,
+      'unit':String
+
     };
   }
 
@@ -23,7 +27,8 @@ class Reading {
     return Reading(
       id: map['id'],
       timestamp: map['timestamp'],
-      value: map['value']
+      value: map['value'].toString(),
+      unit: map['unit']
     );
   }
 }
