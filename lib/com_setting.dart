@@ -1,14 +1,14 @@
 import 'dart:async';
-import 'dart:convert';
-
 import 'package:bagreportun/model/reading.dart';
 import 'package:bagreportun/repository/port_repository.dart';
 import 'package:bagreportun/repository/reading_repository.dart';
 import 'package:bagreportun/util/constant_string.dart';
-import 'package:bagreportun/util/serial_port_service.dart';
+import 'package:bagreportun/controller/serial_port_service.dart';
 import 'package:bagreportun/util/shared_pref_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_libserialport/flutter_libserialport.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 
 class ComSetting extends StatefulWidget {
   const ComSetting({super.key});
@@ -37,14 +37,13 @@ class _ComSettingState extends State<ComSetting> {
   String? selectedPort;
   bool isConnect = false;
   List<String> availablePorts = [];
-  final SerialPortService _serialService = SerialPortService();
+  final  _serialService =  Get.put(SerialPortService());
 
   @override
   void initState() {
     super.initState();
     init();
     _fetchAvailablePorts();
-    _listenToSerialData();
   }
 
   Future<void> init() async {
@@ -52,7 +51,6 @@ class _ComSettingState extends State<ComSetting> {
     print(isConnect);
     if (mounted) {
       setState(() {
-        // Your state update logic here
       });
     }
 
@@ -60,17 +58,9 @@ class _ComSettingState extends State<ComSetting> {
 
   @override
   void dispose() {
-    // Close the port when the widget is disposed
- //   _serialPort.close();
     super.dispose();
   }
 
-  void readDataFromDB() async {
-    readings = await _readingRepository.getAllReadings();
-    print(readings);
-  }
-
-  // Fetch available ports
   Future<void> _fetchAvailablePorts() async {
     List<String> ports = SerialPort.availablePorts;
     if (mounted) {
@@ -113,10 +103,8 @@ class _ComSettingState extends State<ComSetting> {
       isConnect = true;
       if (mounted) {
         setState(() {
-          // Your state update logic here
         });
       }
-    //  _navigateToDataScreen();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to open port')),
@@ -124,55 +112,14 @@ class _ComSettingState extends State<ComSetting> {
     }
   }
 
-  void _listenToSerialData() {
-    _serialService.dataStream.listen(
-          (data) async {
-         //
-            if (mounted) {
-              setState(() {
-                newReading="";
-                newReading+= data; // Append new data
-              });
-            }
-
-
-      },
-      onError: (error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.toString())),
-        );
-      },
-    );
-  }
-
-// Example function to save data to the database
-  void _saveToDatabase(String data) async {
-    // Assuming you have a SQLite database instance `db` and a table named `readings`
-    final reading = Reading(
-      value: data,
-      timestamp: DateTime.now().toIso8601String(),unit: "bay1"
-    );
-    await _readingRepository.insertReading(reading);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-          content: Text('data added successfully from port $selectedPort')),
-    );
-    print('Data saved to database: $data');
-    readDataFromDB();
-  }
-
   Future<void> _disconnectSerialPort() async {
     if (isConnect) {
       _serialService.disconnect();
-      await SharedPrefHelper.saveBool(SharedPrefKeys.isConnect, false);
+      //await SharedPrefHelper.saveBool(SharedPrefKeys.isConnect, false);
       isConnect = (await SharedPrefHelper.getBool(SharedPrefKeys.isConnect))!;
-
-      print("isConnect: $isConnect");
-      //isConnect = false;
       readings.clear();
       if (mounted) {
         setState(() {
-          // Your state update logic here
         });
       }
       ScaffoldMessenger.of(context).showSnackBar(
@@ -180,34 +127,6 @@ class _ComSettingState extends State<ComSetting> {
       );
     }
 
-  }
-
-  // Function to map string parity value to SerialPortParity
-  int _getParity(String parity) {
-    switch (parity.toLowerCase()) {
-      case 'even':
-        return SerialPortParity.even;
-      case 'odd':
-        return SerialPortParity.odd;
-      case 'none':
-      default:
-        return SerialPortParity.none;
-    }
-  }
-
-  // Function to map string parity value to SerialPortParity
-  int _getFlowController(String flowController) {
-    switch (flowController.toLowerCase()) {
-      case 'dtrDsr':
-        return SerialPortFlowControl.dtrDsr;
-      case 'rtsCts':
-        return SerialPortFlowControl.rtsCts;
-      case 'xonXoff':
-        return SerialPortFlowControl.xonXoff;
-      case 'none':
-      default:
-        return SerialPortFlowControl.none;
-    }
   }
 
   @override

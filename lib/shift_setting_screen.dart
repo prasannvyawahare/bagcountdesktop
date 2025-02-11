@@ -1,5 +1,6 @@
 import 'package:bagreportun/repository/shift_repository.dart';
 import 'package:flutter/material.dart';
+import 'controller/serial_port_service.dart';
 import 'model/shift.dart';
 
 class ShiftSettingScreen extends StatefulWidget {
@@ -11,7 +12,7 @@ class ShiftSettingScreen extends StatefulWidget {
 
 class _ShiftSettingScreenState extends State<ShiftSettingScreen> {
   final ShiftRepository _shiftRepository = ShiftRepository();
-
+  final controller = SerialPortService.instance;
   // Controllers for adding shifts
   final TextEditingController _shiftNameController = TextEditingController();
   final TextEditingController _startTimeController = TextEditingController();
@@ -29,6 +30,7 @@ class _ShiftSettingScreenState extends State<ShiftSettingScreen> {
   // Load all shifts from the database
   void _loadShifts() {
     _shiftList = _shiftRepository.getAllShifts();
+
     setState(() {}); // Refresh the UI to display the loaded shifts
   }
 

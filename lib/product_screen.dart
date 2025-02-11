@@ -92,7 +92,7 @@ class _ProductScreenState extends State<ProductScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          "Product Settings",
+          "Brand ",
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -123,7 +123,7 @@ class _ProductScreenState extends State<ProductScreen> {
                     headerBuilder: (BuildContext context, bool isExpanded) {
                       return const ListTile(
                         title: Text(
-                          "Add New Product",
+                          "Add New Brand",
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -136,13 +136,13 @@ class _ProductScreenState extends State<ProductScreen> {
                         padding: const EdgeInsets.all(16.0),
                         child: Column(
                           children: [
-                            _buildTextField('Product Name', _productNameController),
+                            _buildTextField('Brand Name', _productNameController),
                             const SizedBox(height: 10),
-                            _buildTextField('Product Code', _productPriceController),
+                            _buildTextField('Brand Code', _productPriceController),
                             const SizedBox(height: 20),
                             ElevatedButton(
                               onPressed: _addProduct,
-                              child: const Text("Add Product"),
+                              child: const Text("Add Brand"),
                             ),
                           ],
                         ),
@@ -157,7 +157,7 @@ class _ProductScreenState extends State<ProductScreen> {
 
               // Product list display
               const Text(
-                "Existing Products",
+                "Existing Brands",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
@@ -187,7 +187,7 @@ class _ProductScreenState extends State<ProductScreen> {
                         },
                       );
                     } else {
-                      return const Center(child: Text("No products available"));
+                      return const Center(child: Text("No Brand available"));
                     }
                   },
                 ),
