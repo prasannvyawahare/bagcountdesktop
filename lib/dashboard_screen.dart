@@ -1,26 +1,269 @@
+import 'package:bagreportun/repository/reading_count_repository.dart';
+import 'package:bagreportun/repository/reading_repository.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key});
+import 'controller/serial_port_service.dart';
+import 'model/reading_with_count.dart';
+
+class DashboardScreen extends StatefulWidget {
+   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  final controller = SerialPortService.instance;
+  late ReadingRepository readingRepository ; // Fetch instance
+  String bay='',truckNo='',rate='',count='';
+  @override
+  void initState() {
+    getDataFromDb();
+    super.initState();
+  }
+getDataFromDb() async{
+  await controller.getAllReadingData();
+    setState(() {
+
+    });
+
+ // if( controller.readingWithCountList.length>0) {
+ //   ReadingWithCount readingWithCount = controller.readingWithCountList.first;
+ //   setState(() {
+ //     bay = readingWithCount.reading.bay;
+ //     truckNo = readingWithCount.reading.truckNo;
+ //     rate = readingWithCount.reading.mrp.toString();
+ //     count = readingWithCount.count.toString();
+ //   });
+ // }
+}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[200],
-      body: Center(
-        child: Card(
-          elevation: 8,
-          margin: const EdgeInsets.all(20),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
+      backgroundColor: Colors.white60,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+         Row( children: [
+
+           Container(
+      width: 220,
+        height: 170,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              spreadRadius: 2,
+              blurRadius: 5,
+              offset: Offset(4, 4),
+            ),
+          ],
+        ),
+        padding: EdgeInsets.symmetric( vertical: 10),
+        margin: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(width: 3, height: 20, color: Colors.blue),
+                SizedBox(width: 10),
+                Text(
+                  "Port Status",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            Spacer(), // Pushes "Connect" text to the bottom
+            Align(
+              alignment: Alignment.bottomRight,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                child: Text(
+                  "Connect",
+                  style: TextStyle(fontSize: 25,
+                    fontWeight: FontWeight.bold,color:Colors.blue ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+           Container(
+             width: 220,
+             height: 170,
+             decoration: BoxDecoration(
+               color: Colors.white,
+               borderRadius: BorderRadius.circular(10),
+               boxShadow: [
+                 BoxShadow(
+                   color: Colors.black.withOpacity(0.2),
+                   spreadRadius: 2,
+                   blurRadius: 5,
+                   offset: Offset(4, 4),
+                 ),
+               ],
+             ),
+             padding: EdgeInsets.symmetric( vertical: 10),
+             margin: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+             child: Column(
+               crossAxisAlignment: CrossAxisAlignment.start,
+               children: [
+                 Row(
+                   children: [
+                     Container(width:3,height: 20,color: Colors.amberAccent,),
+                     SizedBox(width: 10,),
+                     Text(
+                       "Shift Available",
+                       style: const TextStyle(
+                         fontSize: 18,
+                         fontWeight: FontWeight.bold,
+                       ),
+                     ),
+                   ],
+                 ),
+                 Spacer(), // Pushes "Connect" text to the bottom
+                 Align(
+                   alignment: Alignment.bottomRight,
+                   child: Padding(
+                     padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                     child: Text(
+                       "0",
+                       style: TextStyle(fontSize: 25,
+                           fontWeight: FontWeight.bold,color:Colors.amberAccent ),
+                     ),
+                   ),
+                 ),
+
+               ],
+             ),
+           ),
+           Container(
+             width: 220,
+             height: 170,
+             decoration: BoxDecoration(
+               color: Colors.white,
+               borderRadius: BorderRadius.circular(10),
+               boxShadow: [
+                 BoxShadow(
+                   color: Colors.black.withOpacity(0.2),
+                   spreadRadius: 2,
+                   blurRadius: 5,
+                   offset: Offset(4, 4),
+                 ),
+               ],
+             ),
+             padding: EdgeInsets.symmetric( vertical: 10),
+             margin: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+             child: Column(
+               crossAxisAlignment: CrossAxisAlignment.start,
+               children: [
+                 Row(
+                   children: [
+                     Container(width:3,height: 20,color: Colors.deepPurple,),
+                     SizedBox(width: 10,),
+                     Text(
+                       "Brand Available",
+                       style: const TextStyle(
+                         fontSize: 18,
+                         fontWeight: FontWeight.bold,
+                       ),
+                     ),
+                   ],
+                 ),
+
+                 Spacer(), // Pushes "Connect" text to the bottom
+                 Align(
+                   alignment: Alignment.bottomRight,
+                   child: Padding(
+                     padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                     child: Text(
+                       "0",
+                       style: TextStyle(fontSize: 25,
+                           fontWeight: FontWeight.bold,color:Colors.deepPurple ),
+                     ),
+                   ),
+                 ),
+               ],
+             ),
+           ),
+           Container(
+             width: 220,
+             height: 170,
+             decoration: BoxDecoration(
+               color: Colors.white,
+               borderRadius: BorderRadius.circular(10),
+               boxShadow: [
+                 BoxShadow(
+                   color: Colors.black.withOpacity(0.2),
+                   spreadRadius: 2,
+                   blurRadius: 5,
+                   offset: Offset(4, 4),
+                 ),
+               ],
+             ),
+             padding: EdgeInsets.symmetric( vertical: 10),
+             margin: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+             child: Column(
+               crossAxisAlignment: CrossAxisAlignment.start,
+               children: [
+                 Row(
+                   children: [
+                     Container(width:3,height: 20,color: Colors.green,),
+                     SizedBox(width: 10,),
+                     Text(
+                       "Total Bag Deliver ",
+                       style: const TextStyle(
+                         fontSize: 18,
+                         fontWeight: FontWeight.bold,
+                       ),
+                     ),
+                   ],
+                 ),
+
+                 Spacer(), // Pushes "Connect" text to the bottom
+                 Align(
+                   alignment: Alignment.bottomRight,
+                   child: Padding(
+                     padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                     child: Text(
+                       "0",
+                       style: TextStyle(fontSize: 25,
+                           fontWeight: FontWeight.bold,color:Colors.green ),
+                     ),
+                   ),
+                 ),
+               ],
+             ),
+           ),
+         ],),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  spreadRadius: 2,
+                  blurRadius: 5,
+                  offset: Offset(4, 4),
+                ),
+              ],
+            ),
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            margin: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             child: Column(
-              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header Section
                 const Center(
                   child: Column(
                     children: [
@@ -44,14 +287,36 @@ class DashboardScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 20),
+                Row(children: [
+                  Expanded(child:  controller.readingWithCountList.isNotEmpty?
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Obx(()=>
+                          _buildParameterRow('Bay',  controller.readingWithCountList.first.bay),
+                      ),
+                      Obx(()=>
+                          _buildParameterRow('Track No',  controller.readingWithCountList.first.truckNo),
+                      ),
+                      Obx(()=>
+                          _buildParameterRow('Rate',  controller.readingWithCountList.first.mrp.toString()),
+                      ),
+                      Obx(()=>
+                          _buildParameterRow('Allotted Bag',  controller.readingWithCountList.first.allottedBag.toString()),
+                      ),
+                      Obx(()=>
+                          _buildParameterRow('Remaining Bag',  controller.readingWithCountList.first.count),
+                      ),
+                    ],
+                  ):Center(child: Text("No Data Available")))
+                 ,
+
+                  Expanded(child: Image.asset("images/truck_img.jpg",width: 100,height: 200,)),
+                ],),
 
                 // Parameters
-                _buildParameterRow('Bay', 'A12'),
-                _buildParameterRow('Track No', '4573'),
-                _buildParameterRow('Type', 'Container'),
-                _buildParameterRow('Rate', '\$150'),
-                _buildParameterRow('Qty', '25'),
-                const SizedBox(height: 20),
+
+                const SizedBox(height: 10),
 
                 // Footer
                 const Padding(
@@ -67,11 +332,12 @@ class DashboardScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                ),
+                )
+
               ],
             ),
           ),
-        ),
+          ],
       ),
     );
   }
@@ -87,18 +353,28 @@ class DashboardScreen extends StatelessWidget {
               label,
               style: const TextStyle(
                 fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey,
+                fontWeight: FontWeight.w700,
+                color: Colors.black54
               ),
             ),
           ),
+          Text(":"),
+          SizedBox(width: 20,),
           Expanded(
             flex: 7,
-            child: Text(
-              value,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+            child: Container(
+              decoration: BoxDecoration(
+                color:  Colors.grey[300], // Background color
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+              child: Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.black87,
+                ),
               ),
             ),
           ),

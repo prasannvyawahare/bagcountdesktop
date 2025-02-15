@@ -2,6 +2,8 @@ import 'package:bagreportun/SQLite/database_helper.dart';
 import 'package:bagreportun/master_screen.dart';
 //import 'package:bagreportun/model/user.dart';
 import 'package:flutter/material.dart';
+
+import 'mainscreen/main_screen.dart';
 //import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -26,6 +28,7 @@ class _LoginScreenState extends State<LoginScreen> {
     //databaseFactory = databaseFactoryFfi;
    // handler = db;
     super.initState();
+
   }
 
   _login() async {
@@ -34,7 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (username == "admin" && password == "1234") {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const MasterScreen()),
+        MaterialPageRoute(builder: (context) =>  MainScreen()),
       );
     }
   }
@@ -42,120 +45,176 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blue[100],
+      backgroundColor: Colors.white,
       body: Row(
         children: [
           // Left side - Branding Image (2:3 ratio)
           Expanded(
-            flex: 2,
+            flex: 3,
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.blue,
+                color: Colors.white,
 
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 50.0),
+                child: SizedBox(width: 300,height: 700,
+                  child:ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: Image.asset('images/hd_image.png',    fit: BoxFit.cover,)),),
               ),
             ),
           ),
           // Right side - Login Content (3:3 ratio)
           Expanded(
-            flex: 3,
+            flex: 2,
             child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.white.withOpacity(0.5),
-                    spreadRadius: 5,
-                    blurRadius: 7,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              margin: EdgeInsets.symmetric(horizontal: 100,vertical: 100),
-              child: Padding(
-                padding: const EdgeInsets.all(18.0),
-                child: Card(
-                  elevation: 8,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Login',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: 20),
-                          Container(
-                            width: 300,
-                            child: TextField(
-                              controller: _usernameController,
-                              decoration: InputDecoration(
-                                border: OutlineInputBorder(),
-                                labelText: 'Username',
-                                errorText: _errorMessage.isEmpty ? null : _errorMessage,
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 20),
-                          Container(
-                            width: 300,
-                            child: TextField(
-                              controller: _passwordController,
-                              obscureText: !_isPasswordVisible, // Toggle password visibility
-                              decoration: InputDecoration(
-                                border: OutlineInputBorder(),
-                                labelText: 'Password',
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                                  ),
-                                  onPressed: () {
-                                    setState(() {
-                                      _isPasswordVisible = !_isPasswordVisible; // Toggle the visibility
-                                    });
-                                  },
-                                ),
-                              ),
-                            )
-                          ),
-                          SizedBox(height: 30),
-                          ElevatedButton(
-                            onPressed: () {
-                              _login();
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              padding: EdgeInsets.symmetric(horizontal: 100, vertical: 16),
-                            ),
-                            child: Text("Submit", style: TextStyle(color: Colors.white)),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              // Add your forget password action here
-                            },
-                            child: Text('Forgot Username/Password?'),
-                          ),
-                        ],
+              margin: EdgeInsets.symmetric(horizontal: 100,),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'WelcomeBack',
+                      style: TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
+                  Text(
+                      'Login',
+                      style: TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    Container(
+                      width: 250,
+                      color: Colors.white60,
+                      child: TextField(
+                        autofocus: true,
+                        enableInteractiveSelection: false,
+                        controller: _usernameController,
+                        decoration: InputDecoration(
+                          labelText: 'Username',
+                          errorText: _errorMessage.isEmpty ? null : _errorMessage,
+                        //  filled: true,
+                         // fillColor:  Colors.white60, // Visual cue
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                         //   borderSide: BorderSide.,
+                          ),
+                          contentPadding:
+                          const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    Container(
+                      width: 250,
+                      child: TextField(
+                        controller: _passwordController,
+                        obscureText: !_isPasswordVisible, // Toggle password visibility
+                        decoration: InputDecoration(
+                         border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                        //   borderSide: BorderSide.,
+                      ),
+                          labelText: 'Password',
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _isPasswordVisible = !_isPasswordVisible; // Toggle the visibility
+                              });
+                            },
+                          ),
+                        ),
+                      )
+                    ),
+                    SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () {
+                        _login();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: EdgeInsets.symmetric(horizontal: 100, vertical: 20),
+                      ),
+                      child: Text("Submit", style: TextStyle(color: Colors.white)),
+                    ),
+                    // TextButton(
+                    //   onPressed: () {
+                    //     // Add your forget password action here
+                    //   },
+                    //   child: Text('Forgot Username/Password?'),
+                    // ),
+                    SizedBox(height: 50,),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+
+                        Text(
+                          'Powered by' ,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.blueGrey,
+                          ),
+                        ),
+                        Text(
+                          'Microtron Systems',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.green,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+  Widget _buildTextField(String label, TextEditingController controller) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          "$label :",
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        SizedBox(
+          width: 180,
+          child: TextField(
+            controller: controller,
+
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.grey[200], // Visual cue
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            ),
+            style: const TextStyle(fontSize: 16),
+          ),
+        ),
+      ],
     );
   }
 }

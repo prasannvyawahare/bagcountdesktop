@@ -8,10 +8,10 @@ import '../SQLite/database_helper.dart';
 import '../model/reading.dart';
 import '../model/reading_with_count.dart';
 
-class ReadingRepository  {
-  final DatabaseHelper _databaseHelper = DatabaseHelper();
+class ReadingRepository extends GetxService  {
+  //final DatabaseHelper _databaseHelper = DatabaseHelper();
 
-    //final DatabaseHelper _databaseHelper  = Get.find<DatabaseHelper>();
+  final DatabaseHelper _databaseHelper  = Get.find<DatabaseHelper>();
   // Create a new reading
   Future<int> insertReading(Reading reading) async {
     try {
@@ -21,17 +21,19 @@ class ReadingRepository  {
       // Perform raw insert into the Reading table with all fields
       final id = await db.rawInsert(
         '''INSERT INTO Reading(
-        timestamp, bay, truckNo, brand, mrp, ton
-      ) VALUES(?, ?, ?, ?, ?, ?)''',
+        timestamp, bay, truckNo, brand, mrp, ton,allottedBag
+      ) VALUES(?, ?, ?, ?, ?, ?,?)''',
         [
           reading.timestamp,    // timestamp
           reading.bay,          // bay
           reading.truckNo,      // truckNo
           reading.brand,        // brand
           reading.mrp,          // mrp
-          reading.ton
+          reading.ton,
+          reading. allottedBag
         ],
       );
+    print("id db ${reading.allottedBag}");
     print("id db $id");
       // Return the id of the inserted record
       return id;
@@ -53,6 +55,7 @@ class ReadingRepository  {
       print("Readings from DB: $maps");
       return maps.map((map) => Reading.fromJson(map)).toList();
     } catch (e) {
+      print('Error inserting reading: $e');
       return [];
     }
   }
@@ -60,8 +63,9 @@ class ReadingRepository  {
 
 
   Future<List<ReadingWithCount>> getCombinedReadings() async {
-    final db = await _databaseHelper.database;
-    final List<Map<String, dynamic>> result = await db.rawQuery('''
+    try{
+      final db = await _databaseHelper.database;
+      final List<Map<String, dynamic>> result = await db.rawQuery('''
       SELECT 
         r.id, 
         r.timestamp, 
@@ -70,15 +74,21 @@ class ReadingRepository  {
         r.brand, 
         r.mrp, 
         r.ton, 
+        r.allottedBag, 
         rc.count, 
         rc.timestamp AS readingCountTimestamp 
       FROM Reading r
       INNER JOIN ReadingCount rc ON r.id = rc.readingId
       WHERE r.id IS NOT NULL AND rc.readingId IS NOT NULL
-      ORDER BY r.timestamp DESC;
+      ORDER BY r.timestamp;
     ''');
+      print("Readings111 from DB: $result");
+      return result.map((map) => ReadingWithCount.fromJson(map)).toList();
+    }catch(e){
+      print('Error inserting reading1: $e');
+      return [];
+    }
 
-    return result.map((map) => ReadingWithCount.fromMap(map)).toList();
   }
 
   // Get a specific reading by ID

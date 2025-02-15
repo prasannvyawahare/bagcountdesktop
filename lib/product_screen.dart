@@ -90,17 +90,18 @@ class _ProductScreenState extends State<ProductScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          "Brand ",
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.blue,
-          ),
-        ),
-        centerTitle: true,
-      ),
+      backgroundColor: Colors.grey[100],
+      // appBar: AppBar(
+      //   title: const Text(
+      //     "Brand ",
+      //     style: TextStyle(
+      //       fontSize: 20,
+      //       fontWeight: FontWeight.bold,
+      //       color: Colors.blue,
+      //     ),
+      //   ),
+      //   centerTitle: true,
+      // ),
       body: Container(
         color: Colors.white,
 

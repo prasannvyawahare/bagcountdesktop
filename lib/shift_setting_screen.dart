@@ -106,19 +106,20 @@ class _ShiftSettingScreenState extends State<ShiftSettingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          "Shift Settings",
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.blue,
-          ),
-        ),
-        centerTitle: true,
-      ),
+      backgroundColor: Colors.grey[100],
+      // appBar: AppBar(
+      //   title: const Text(
+      //     "Shift Settings",
+      //     style: TextStyle(
+      //       fontSize: 20,
+      //       fontWeight: FontWeight.bold,
+      //       color: Colors.blue,
+      //     ),
+      //   ),
+      //   centerTitle: true,
+      // ),
       body: Container(
-        color: Colors.white,
+       // color: Colors.white,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(

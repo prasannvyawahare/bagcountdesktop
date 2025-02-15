@@ -1,14 +1,15 @@
+import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_state_manager/src/rx_flutter/rx_disposable.dart';
 
 import '../SQLite/database_helper.dart';
 import '../model/reading_count.dart';
 
-class ReadingCountRepository  {
+class ReadingCountRepository extends GetxService {
 
-  final DatabaseHelper _databaseHelper = DatabaseHelper();
+ // final DatabaseHelper _databaseHelper = DatabaseHelper();
 
-  //final DatabaseHelper _databaseHelper  = Get.find<DatabaseHelper>();
+  final DatabaseHelper _databaseHelper  = Get.find<DatabaseHelper>();
 
   Future<int> getReadingCount() async {
     return 0;

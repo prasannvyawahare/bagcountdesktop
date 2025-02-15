@@ -34,11 +34,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('BagCount Profile'),
-        centerTitle: true,
-      ),
+      backgroundColor: Colors.grey[100],
+      // appBar: AppBar(
+      //   title: const Text('BagCount Profile'),
+      //   centerTitle: true,
+      // ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

@@ -63,7 +63,8 @@ class DatabaseHelper {
               truckNo TEXT,
               brand TEXT,
               mrp REAL,
-              ton REAL
+              ton REAL,
+              allottedBag TEXT
             );
           ''');
 

@@ -18,8 +18,8 @@ class SerialPortService extends GetxController  {
   final StreamController<String> _dataController = StreamController<String>.broadcast();
   bool isConnected = false;
   StreamSubscription? _dataSubscription;
-  final readingRepository = ReadingRepository();
-  final readingCountRepository = ReadingCountRepository();
+  //final readingRepository = ReadingRepository();
+ // final readingCountRepository = ReadingCountRepository();
   Stream<String> get dataStream => _dataController.stream;
   //String oldCount='';
   String newCount='';
@@ -29,15 +29,20 @@ class SerialPortService extends GetxController  {
   int _currentReadingId = 0;
 
 
-
+    late ReadingRepository readingRepository ; // Fetch instance
+    late ReadingCountRepository readingCountRepository ; // Fetch instance
 
 
   @override
   void onInit() {
     super.onInit();
+    _loadData();
+  }
+  _loadData() async{
+    readingRepository = await  Get.find<ReadingRepository>();
+    readingCountRepository = await  Get.find<ReadingCountRepository>();
     getAllReadingData();
   }
-
   Future<bool> connectSerialPort({
     required String portName,
     required int baudRate,
@@ -75,23 +80,55 @@ class SerialPortService extends GetxController  {
                 String receivedData = String.fromCharCodes(data);
                 _dataController.add(receivedData); // Send data to stream
                 _buffer += receivedData;
-
-                if(_buffer.startsWith("*") && _buffer.length == 22){
+                print("_buffer0 $_buffer");
+                if(_buffer.startsWith("*") && _buffer.length == 20){
                   currentReading=_buffer;
                   readingId= await parseRawData(_buffer);
+                  print("_buffer1 $_buffer");
                   _currentReadingId=readingId;
+                  print("_currentReadingId $_currentReadingId");
                   _buffer='';
                 }
 
+                // _debounceTimer1?.cancel();
+                // _debounceTimer1 = Timer(Duration(milliseconds: 200), () async {
+                //   RegExp regex = RegExp(r"[$#](-?\d+)"); // Updated regex
+                //  // RegExp regex = RegExp(r"[$#](?:\](-?\d+)|(-?\d+))"); // Updated regex
+                //   Iterable<Match> matches = regex.allMatches(_buffer);
+                //   print("_buffer $_buffer");
+                //   for (Match match in matches) {
+                //     String counterValue = match.group(1)!;
+                //     if (_currentReadingId == 0) continue;
+                //     print("counterValue $counterValue");
+                //     if (_lastCounts[_currentReadingId] != counterValue) {
+                //       var readingCount = ReadingCount(
+                //         count: counterValue,
+                //         readingId: _currentReadingId,
+                //         timestamp: DateTime.now().toIso8601String(),
+                //       );
+                //       var hash = await readingCountRepository.insertReadingCount(readingCount);
+                //       print("hash* $hash");
+                //       _lastCounts[_currentReadingId] = counterValue;
+                //       getAllReadingData();
+                //     }
+                //   }
+                //   _buffer = '';
+                // });
+
                 _debounceTimer1?.cancel();
-                _debounceTimer1 = Timer(Duration(seconds: 3), () async {
-                  RegExp regex = RegExp(r"[$#](-?\d+)"); // Updated regex
+                _debounceTimer1 = Timer(Duration(milliseconds: 200), () async {
+                  RegExp regex = RegExp(r"[$#](?:\](\d+)|(\d+))"); // Updated regex
                   Iterable<Match> matches = regex.allMatches(_buffer);
                   print("_buffer $_buffer");
                   for (Match match in matches) {
-                    String counterValue = match.group(1)!;
+                    String? positiveValue = match.group(2); // Normal positive values
+                    String? negativeValue = match.group(1); // Values from `#]`
+
+                    String counterValue = negativeValue != null ? "-$negativeValue" : positiveValue!;
+
                     if (_currentReadingId == 0) continue;
                     print("counterValue $counterValue");
+
                     if (_lastCounts[_currentReadingId] != counterValue) {
                       var readingCount = ReadingCount(
                         count: counterValue,
@@ -101,35 +138,12 @@ class SerialPortService extends GetxController  {
                       var hash = await readingCountRepository.insertReadingCount(readingCount);
                       print("hash* $hash");
                       _lastCounts[_currentReadingId] = counterValue;
+                      getAllReadingData();
                     }
                   }
                   _buffer = '';
                 });
 
-
-
-                // _debounceTimer1?.cancel();
-                // _debounceTimer1 = Timer(Duration(seconds: 3), () async {
-                //   RegExp regex = RegExp(r"#(-?\d+)");
-                //   Iterable<Match> matches = regex.allMatches(_buffer);
-                //   print("_buffer $_buffer");
-                //   for (Match match in matches) {
-                //     String counterValue = match.group(1)!;
-                //     if (_currentReadingId == 0) continue;
-                //   print("counterValue# $counterValue");
-                //     if (_lastCounts[_currentReadingId] != counterValue) {
-                //       var readingCount = ReadingCount(
-                //         count: counterValue,
-                //         readingId: _currentReadingId,
-                //         timestamp: DateTime.now().toIso8601String(),
-                //       );
-                //       var hash=await readingCountRepository.insertReadingCount(readingCount);
-                //       print("hash* $hash");
-                //       _lastCounts[_currentReadingId] = counterValue;
-                //     }
-                //   }
-                //   _buffer = '';
-                // });
 
               },
           onError: (error) {
@@ -187,11 +201,15 @@ class SerialPortService extends GetxController  {
       String brand = dataPart.substring(6, 9); // Next 3 characters = Brand
       double mrp =double.parse( dataPart.substring(9, 12)); // Next 3 digits = MRP
       double ton = (int.parse(dataPart.substring(12, 15)) / 10).toDouble(); // Next 3 digits = Ton (divided by 10)
-if(bay=='10'){
-  bay="01";
-}else{
-  bay="02";
-}
+      int allottedBag = (int.parse(dataPart.substring(15, 18))); // allowted bag
+      print("allowted_baf: ${allottedBag}");
+
+
+      if(bay=='10'){
+         bay="01";
+      }else{
+         bay="02";
+      }
 
      final timestamp=DateTime.now().toIso8601String();
      final reading = Reading(
@@ -200,9 +218,24 @@ if(bay=='10'){
        truckNo: truckNo,
        brand: brand,
        mrp: mrp,
-       ton: ton);
+       ton: ton,
+         allottedBag:allottedBag
+     );
 
-     return await readingRepository.insertReading(reading);
+      print("allowted_baf2: ${reading.toString()}");
+    var id =await readingRepository.insertReading(reading);
+
+
+      var readingCount = ReadingCount(
+        count: allottedBag.toString(),
+        readingId: id,
+        timestamp: DateTime.now().toIso8601String(),
+      );
+      var hash = await readingCountRepository.insertReadingCount(readingCount);
+      print("hash* $hash");
+      _lastCounts[_currentReadingId] = allottedBag.toString();
+      getAllReadingData();
+     return id;
       // return TruckData(
       //   bay: bay,
       //   truckNo: truckNo,
@@ -217,16 +250,17 @@ if(bay=='10'){
   }
 
   getAllReadingData() async {
-    // final readings = await readingRepository.getAllReadings();
-    // readingList.assignAll(readings.reversed.toList());
-
-    List<ReadingWithCount> readingsWithC = await readingRepository.getCombinedReadings();
-    readingWithCountList.assignAll(readingsWithC.reversed.toList());
-    for (var reading in readingsWithC) {
-      print("Reading ID: ${reading.reading.id}, Bay: ${reading.reading.bay}, Truck No: ${reading.reading.truckNo}");
-      print("Count: ${reading.count}, Count Timestamp: ${reading.readingCountTimestamp}");
-    }
-
+try {
+  List<ReadingWithCount> readingsWithC = await readingRepository
+      .getCombinedReadings();
+  for(ReadingWithCount read1 in readingsWithC){
+    // print("read1.count ${read1.count}");
+  }
+  readingWithCountList.assignAll(readingsWithC.reversed);
+  readingWithCountList.refresh();
+}catch(e){
+  print("error : $e");
+}
   }
 
 
