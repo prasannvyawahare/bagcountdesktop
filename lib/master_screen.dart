@@ -168,7 +168,8 @@ class SideMenu extends StatelessWidget {
         //   icon: Icon(isCollapsed ? Icons.chevron_right : Icons.chevron_left),
         //   onPressed: toggleCollapse,
         // ),
-        SizedBox(height: 150,),
+        SizedBox(height: 100,child: Image.asset("images/microtronsystem.png"),),
+
         Divider(height: 1, color: Colors.grey[200],),
         SizedBox(height: 20,),
         Expanded(
@@ -189,8 +190,8 @@ class SideMenu extends StatelessWidget {
           padding: EdgeInsets.only(bottom: 20),
           child: Image.asset(
             "images/person_laptop_img.png", // Replace with your actual image path
-            height: isCollapsed ? 40 : 100, // Adjust size based on menu state
-            width: isCollapsed ? 40 : 100,
+            height: isCollapsed ? 40 : 150, // Adjust size based on menu state
+            width: isCollapsed ? 40 : 150,
             fit: BoxFit.contain,
           ),
         ),
