@@ -7,8 +7,8 @@ import 'package:get/get_core/src/get_main.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-import '../SQLite/database_helper.dart';
-import '../controller/serial_port_service.dart';
+import 'SQLite/database_helper.dart';
+import 'controller/serial_port_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

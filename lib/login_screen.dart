@@ -69,24 +69,35 @@ class _LoginScreenState extends State<LoginScreen> {
           Expanded(
             flex: 2,
             child: Container(
-              margin: EdgeInsets.symmetric(horizontal: 100,),
+              margin: EdgeInsets.symmetric(horizontal: 80,),
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'WelcomeBack',
+                      'Bag Count Reporting System',
                       style: TextStyle(
                         fontSize: 40,
                         fontWeight: FontWeight.bold,
+                        color: Colors.blue
+                      ),
+                    ),
+                  SizedBox(height: 20,),
+                  Text(
+                      'WelcomeBack',
+                      style: TextStyle(
+                        fontSize: 30,
+                        fontWeight: FontWeight.bold,
+                          color:  Colors.black38
                       ),
                     ),
                   Text(
                       'Login',
                       style: TextStyle(
-                        fontSize: 40,
+                        fontSize: 30,
                         fontWeight: FontWeight.bold,
+                        color:  Colors.black38
                       ),
                     ),
                     SizedBox(height: 20),
@@ -174,7 +185,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
-                            color: Colors.green,
+                            color: Colors.indigo,
                           ),
                         ),
                       ],

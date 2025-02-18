@@ -1101,14 +1101,14 @@ class ReadingDataTableSource extends DataTableSource {
     return formattedDate;
   }
 
-  String getTime(String time) {
-    DateTime dateTime = DateTime.parse(time);
-    String formattedDate = DateFormat('HH:mm').format(dateTime);
-    return formattedDate;
-  }
+
 
 }
-
+String getTime(String time) {
+  DateTime dateTime = DateTime.parse(time);
+  String formattedDate = DateFormat('HH:mm').format(dateTime);
+  return formattedDate;
+}
 
 
 

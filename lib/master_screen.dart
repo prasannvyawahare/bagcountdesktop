@@ -102,7 +102,7 @@ class _MasterScreenState extends State<MasterScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Bag Count Reporting System - RCCPL Pvt. Ltd. Btibory(GU)",
+                        "RCCPL Pvt. Ltd. Btibory(GU)",
                         style: TextStyle(fontSize: 18, color: Colors.blue, fontWeight: FontWeight.bold),
                       ),
 

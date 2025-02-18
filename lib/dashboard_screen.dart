@@ -4,6 +4,7 @@ import 'package:bagreportun/repository/reading_repository.dart';
 import 'package:bagreportun/repository/shift_repository.dart';
 import 'package:bagreportun/util/constant_string.dart';
 import 'package:bagreportun/util/shared_pref_helper.dart';
+import 'package:bagreportun/vew_report_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
@@ -76,11 +77,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-         Row( children: [
+         Row(
+
+           children: [
 
            Container(
-      width: 220,
-        height: 170,
+      width: 200,
+        height: 150,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(10),
@@ -104,8 +107,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: SvgPicture.asset(
                 'images/icons/menu_store.svg',
                 color: Colors.blue[100],// Replace with your actual SVG path
-                width: 100, // Adjust width as needed
-                height: 80, // Adjust height as needed
+                width: 80, // Adjust width as needed
+                height: 60, // Adjust height as needed
               ),
             ),
 
@@ -132,7 +135,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 15.0),
                     child: Text(
-                      isConnect == true ? "Connect" : "DisConnect",
+                      isConnect == true ? "Connect" : "Disconnect",
                       style: TextStyle(
                         fontSize: 25,
                         fontWeight: FontWeight.bold,
@@ -148,8 +151,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
            ),
            Container(
-             width: 220,
-             height: 170,
+             width: 200,
+             height: 150,
              decoration: BoxDecoration(
                color: Colors.white,
                borderRadius: BorderRadius.circular(10),
@@ -173,8 +176,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                    child: SvgPicture.asset(
                      'images/icons/menu_doc.svg',
                      color: Colors.amber[100],// Replace with your actual SVG path
-                     width: 100, // Adjust width as needed
-                     height: 80, // Adjust height as needed
+                     width: 80, // Adjust width as needed
+                     height: 60, // Adjust height as needed
                    ),
                  ),
                  Column(
@@ -213,8 +216,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
              ),
            ),
            Container(
-             width: 220,
-             height: 170,
+             width: 200,
+             height: 150,
              decoration: BoxDecoration(
                color: Colors.white,
                borderRadius: BorderRadius.circular(10),
@@ -276,8 +279,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
              ),
            ),
            Container(
-             width: 220,
-             height: 170,
+             width: 200,
+             height: 150,
              decoration: BoxDecoration(
                color: Colors.white,
                borderRadius: BorderRadius.circular(10),
@@ -313,7 +316,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                          Container(width:3,height: 20,color: Colors.green,),
                          SizedBox(width: 10,),
                          Text(
-                           "Total Bag Deliver ",
+                           "Total Extra Bag",
                            style: const TextStyle(
                              fontSize: 18,
                              fontWeight: FontWeight.bold,
@@ -362,38 +365,44 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   child: Column(
                     children: [
                       Text(
-                        'Wi-Bag Counter',
+                        'Wi-Bag Counter System',
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                           color: Colors.blue,
                         ),
                       ),
-                      SizedBox(height: 4),
-                      Text(
-                        'RCC PL Nagpur',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey,
-                        ),
-                      ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 10),
                 Row(children: [
                   Expanded(child:  controller.readingWithCountList.isNotEmpty?
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                       "Last Data Updated",
-                        style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.black
-                        ),
-                      ),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                       Obx(()=>Text(
+                         "Start Time : ${getTime( controller.readingWithCountList.first.readingCountTimestamp)} ",
+                         style: const TextStyle(
+                             fontSize: 13,
+                             fontWeight: FontWeight.w700,
+                             color: Colors.black54
+                         ),
+                       )) ,
+                        controller.readingWithCountList.first.count==0?
+                       Text(
+                           "End Time : ${controller.readingWithCountList.first.readingCountTimestamp}",
+                            style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.black54
+                            ),
+                          ):SizedBox(),
+                      ],
+                    ),
 
                       Obx(()=>
                           _buildParameterRow('Bay',  controller.readingWithCountList.first.bay),
@@ -409,6 +418,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       Obx(()=>
                           _buildParameterRow('Remaining Bag',  controller.readingWithCountList.first.count),
+                      ),
+                    Obx(()=>
+                          _buildParameterRow('Extra Bag',
+
+                              int.parse( controller.readingWithCountList.first.count)<0?
+                              controller.readingWithCountList.first.count: '0'
+
+
+                          ),
                       ),
                     ],
                   ):Center(child: Text("No Data Available"))),
