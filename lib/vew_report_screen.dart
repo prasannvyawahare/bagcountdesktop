@@ -3,9 +3,11 @@ import 'package:bagreportun/repository/reading_repository.dart';
 import 'package:bagreportun/repository/shift_repository.dart';
 import 'package:bagreportun/util/generate_exl.dart';
 import 'package:bagreportun/util/generate_pdf.dart';
+import 'package:bagreportun/util/show_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:open_filex/open_filex.dart';
 
 import 'controller/serial_port_service.dart';
 import 'model/product.dart';
@@ -91,7 +93,6 @@ class _VewReportScreenState extends State<VewReportScreen> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     init();
   }
@@ -443,10 +444,11 @@ class _VewReportScreenState extends State<VewReportScreen> {
                                             children: [
                                               // PDF option
                                               GestureDetector(
-                                                onTap: () {
+                                                onTap: () async {
                                                   // Handle PDF action
-                                                  exportReadingsToPdf(controller.readingWithCountList);
-                                                  print('PDF File tapped');
+                                                 var path= await exportReadingsToPdf(controller.readingWithCountList);
+                                                  //await OpenFilex.open(path);
+                                                 FileAlert.showFileSavedDialog(context, path);
                                                 },
                                                 child: Column(
                                                   children: [
@@ -460,9 +462,9 @@ class _VewReportScreenState extends State<VewReportScreen> {
 
                                               // Excel option
                                               GestureDetector(
-                                                onTap: () {
-                                                  exportReadingsToExcel(controller.readingWithCountList);
-                                                  print('Excel File tapped');
+                                                onTap: () async {
+                                                var filePath= await exportReadingsToExcel(controller.readingWithCountList);
+                                                FileAlert.showFileSavedDialog(context, filePath);
                                                 },
                                                 child: Column(
                                                   children: [
@@ -556,6 +558,8 @@ class _VewReportScreenState extends State<VewReportScreen> {
                           child: Image.asset('images/no_data_img.png', width: 200, height: 200)),
 
                       SizedBox(height: 10,),
+
+
                       Text("No data available",
                           style:
                           TextStyle(color: Colors.black54, fontSize: 20, fontWeight: FontWeight.bold)),
@@ -620,7 +624,7 @@ class ReadingDataTableSource extends DataTableSource {
       DataCell(Text(getDate(truckData.timestamp))),
       DataCell(Text(getTime(truckData.readingCountTimestamp))),
       DataCell(Text(truckData.allottedBag.toString())),
-      int.parse(truckData.count ) <0? DataCell(Text('0')):
+      int.parse(truckData.count ) <=0? DataCell(Text('0')):
       DataCell(Text(truckData.count.toString())),
       int.parse(truckData.count)<0?
       DataCell(Text(  truckData.count.toString())):DataCell(Text('0')),

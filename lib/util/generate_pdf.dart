@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:open_filex/open_filex.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
@@ -6,7 +7,7 @@ import 'package:intl/intl.dart';
 
 import '../model/reading_with_count.dart';
 
-Future<void> exportReadingsToPdf(List<ReadingWithCount> readings) async {
+Future<String> exportReadingsToPdf(List<ReadingWithCount> readings) async {
   final pdf = pw.Document();
 
   // Add Title
@@ -72,4 +73,10 @@ Future<void> exportReadingsToPdf(List<ReadingWithCount> readings) async {
   await file.writeAsBytes(await pdf.save());
 
   print('PDF file saved at: $filePath');
+  // Open the PDF file
+  return filePath;
+
+
+
+
 }

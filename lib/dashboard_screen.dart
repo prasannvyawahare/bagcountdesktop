@@ -27,12 +27,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final controller = SerialPortService.instance;
   late ReadingRepository readingRepository ; // Fetch instance
   final ProductRepository _productRepository = ProductRepository();
+  final ReadingCountRepository _readingCountRepository = ReadingCountRepository();
   final ShiftRepository _shiftRepository = ShiftRepository();
   String bay='',truckNo='',rate='',count='', shiftLengthCount='0', brandLengthCount='0';
   bool isConnect = false;
   @override
   void initState() {
     init();
+    getExtraBagCount();
     _loadProducts();
     _loadShifts();
     getDataFromDb();
@@ -50,6 +52,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
      //     count = readingWithCount.count.toString();
      //   });
      // }
+    }
+    getExtraBagCount() async{
+      await controller.getNegativeCount();
+      setState(() {});
     }
   Future<void> _loadShifts() async {
     List<Shift> _shiftList =await  _shiftRepository.getAllShifts();
@@ -331,7 +337,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                      child: Padding(
                        padding: const EdgeInsets.symmetric(horizontal: 15.0),
                        child: Text(
-                         controller.readingWithCountList.length.toString(),
+                         controller.negativeCount.value.toString(),
                          style: TextStyle(fontSize: 25,
                              fontWeight: FontWeight.bold,color:Colors.green ),
                        ),
@@ -415,9 +421,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       Obx(()=>
                           _buildParameterRow('Allotted Bag',  controller.readingWithCountList.first.allottedBag.toString()),
-                      ),
+                      ),// int.parse(truckData.count ) <=0? DataCell(Text('0')):
+                     // DataCell(Text(truckData.count.toString()))
                       Obx(()=>
-                          _buildParameterRow('Remaining Bag',  controller.readingWithCountList.first.count),
+                          _buildParameterRow('Remaining Bag',  int.parse(controller.readingWithCountList.first.count)<=0? "0" : controller.readingWithCountList.first.count),
                       ),
                     Obx(()=>
                           _buildParameterRow('Extra Bag',
@@ -429,31 +436,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                       ),
                     ],
-                  ):Center(child: Text("No Data Available"))),
+                  ):Center(child: Column(
+                    children: [
+                      SizedBox(height: 20,),
+                      Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.all(
+                                Radius.circular(20)
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: Offset(2, 0), // Shadow to the right
+                              ),
+                            ],
+                          ),
+                          child: Image.asset('images/no_data_img.png', width: 200, height: 200)),
+                      SizedBox(height: 10,),
+                      Text("No Data Available"),
+                    ],
+                  ))),
                   Expanded(
                       child: Image.asset("images/truck_img.jpg",width: 100,height: 200,fit:BoxFit.fitHeight ,)),
                 ],),
-
-                // Parameters
-
-                // const SizedBox(height: 10),
-                //
-                // // Footer
-                // const Padding(
-                //   padding: EdgeInsets.only(right: 20),
-                //   child: Align(
-                //     alignment: Alignment.centerRight,
-                //     child: Text(
-                //       'Microtron Systems',
-                //       style: TextStyle(
-                //         fontSize: 16,
-                //         fontWeight: FontWeight.w500,
-                //         color: Colors.green,
-                //       ),
-                //     ),
-                //   ),
-                // )
-
               ],
             ),
           ),

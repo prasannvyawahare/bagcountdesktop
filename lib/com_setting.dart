@@ -154,82 +154,81 @@ class _ComSettingState extends State<ComSetting> {
             elevation: 8,
             child: Padding(
               padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 20),
-                  _buildPortSelector(),
-                  const SizedBox(height: 16),
-                  _buildTextField("Baud Rate", baudRateController),
-                  const SizedBox(height: 16),
-                  _buildTextField("Data Bits", dataBitsController),
-                  const SizedBox(height: 16),
-                  _buildTextField("Parity", parityController),
-                  const SizedBox(height: 16),
-                  _buildTextField("Stop Bits", stopBitsController),
-                  Text(
-                    newReading,
-                  ),
-                  const Spacer(),
-                  Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 150,
-                          child: ElevatedButton(
-                            onPressed: _connectSerialPort,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: isConnect?Colors.grey:Colors.blue,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+              child: Stack(
+                children:[ Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 20),
+                    _buildPortSelector(),
+                    const SizedBox(height: 16),
+                    _buildTextField("Baud Rate", baudRateController),
+                    const SizedBox(height: 16),
+                    _buildTextField("Data Bits", dataBitsController),
+                    const SizedBox(height: 16),
+                    _buildTextField("Parity", parityController),
+                    const SizedBox(height: 16),
+                    _buildTextField("Stop Bits", stopBitsController),
+                    const Spacer(),
+                    Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 150,
+                            child: ElevatedButton(
+                              onPressed: _connectSerialPort,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: isConnect?Colors.grey:Colors.blue,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 24, vertical: 16),
                               ),
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 24, vertical: 16),
+                              child: Text(isConnect?"Connected":"Connect",
+                                  style: TextStyle(color: Colors.white)),
                             ),
-                            child: Text(isConnect?"Connected":"Connect",
-                                style: TextStyle(color: Colors.white)),
                           ),
-                        ),
-                        SizedBox(width: 16),
-                        isConnect
-                            ? Container(
-                          width: 150,
-                          child: ElevatedButton(
-                            onPressed: _disconnectSerialPort,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                          SizedBox(width: 16),
+                          isConnect
+                              ? Container(
+                            width: 150,
+                            child: ElevatedButton(
+                              onPressed: _disconnectSerialPort,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 24, vertical: 16),
                               ),
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 24, vertical: 16),
+                              child: Text("Disconnect",
+                                  style: TextStyle(color: Colors.white)),
                             ),
-                            child: Text("Disconnect",
-                                style: TextStyle(color: Colors.white)),
-                          ),
-                        )
-                            : SizedBox(),
-                      ],
+                          )
+                              : SizedBox(),
+                        ],
+                      ),
                     ),
-                  ),
 
-                  // readings.length>0?Container(
-                  //   height: 300,
-                  //   child: ListView.builder(
-                  //     itemCount: readings.length,
-                  //     itemBuilder: (context, index) {
-                  //       return ListTile(
-                  //         title: Text(readings[index].value.toString()),
-                  //       );
-                  //     },
-                  //   ),
-                  // ):Container(
-                  //   child: Center(
-                  //     child: Text("No Data Found"),
-                  //   ),
-                  // ),
-                ],
+                    // readings.length>0?Container(
+                    //   height: 300,
+                    //   child: ListView.builder(
+                    //     itemCount: readings.length,
+                    //     itemBuilder: (context, index) {
+                    //       return ListTile(
+                    //         title: Text(readings[index].value.toString()),
+                    //       );
+                    //     },
+                    //   ),
+                    // ):Container(
+                    //   child: Center(
+                    //     child: Text("No Data Found"),
+                    //   ),
+                    // ),
+                  ],
+                )],
               ),
             ),
           ),

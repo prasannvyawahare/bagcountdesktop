@@ -21,6 +21,22 @@ class ReadingCountRepository extends GetxService {
     return await db.insert('ReadingCount', readingCount.toJson());
   }
 
+  Future<List<Map<String, dynamic>>> getNegativeValues() async {
+    final db = await _databaseHelper.database;
+    return await db.query('ReadingCount', where: 'count < 0');
+  }
+
+  Future<int> printNegativeValues() async {
+    List<Map<String, dynamic>> negativeValues = await getNegativeValues();
+    print("negative value ${negativeValues.length}");
+    for (var row in negativeValues) {
+
+      print(row);
+    }
+  return negativeValues.length;
+
+  }
+
 
 
 }

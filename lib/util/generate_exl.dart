@@ -5,7 +5,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../model/reading_with_count.dart';
 
-Future<void> exportReadingsToExcel(List<ReadingWithCount> readings) async {
+Future<String> exportReadingsToExcel(List<ReadingWithCount> readings) async {
   var excel = Excel.createExcel();
   Sheet sheet = excel['Sheet1'];
 
@@ -54,4 +54,5 @@ Future<void> exportReadingsToExcel(List<ReadingWithCount> readings) async {
   await file.writeAsBytes(bytes);
 
   print('Excel file saved at: $filePath');
+  return filePath;
 }

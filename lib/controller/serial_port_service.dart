@@ -28,6 +28,7 @@ class SerialPortService extends GetxController  {
   Timer? _debounceTimer2;
   final Map<int, String> _lastCounts = {};
   int _currentReadingId = 0;
+  RxInt negativeCount=0.obs;
 
 
     late ReadingRepository readingRepository ; // Fetch instance
@@ -284,6 +285,13 @@ try {
   }
 
 
+  getNegativeCount() async {
+    await readingCountRepository
+        .getNegativeValues();
+    negativeCount.value= await readingCountRepository.printNegativeValues();
+
+
+  }
   void closeDb() async {
     await readingRepository. closeDb();
   }
