@@ -132,7 +132,7 @@ class _ComSettingState extends State<ComSetting> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Colors.white60,
       // appBar: AppBar(
       //   title: const Text(
       //     "Configure Serial Port",

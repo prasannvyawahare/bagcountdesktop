@@ -1,11 +1,17 @@
+import 'package:bagreportun/repository/product_repository.dart';
 import 'package:bagreportun/repository/reading_repository.dart';
+import 'package:bagreportun/repository/shift_repository.dart';
+import 'package:bagreportun/util/generate_exl.dart';
+import 'package:bagreportun/util/generate_pdf.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import 'controller/serial_port_service.dart';
+import 'model/product.dart';
 import 'model/reading.dart';
 import 'model/reading_with_count.dart';
+import 'model/shift.dart';
 
 class VewReportScreen extends StatefulWidget {
   const VewReportScreen({super.key});
@@ -16,16 +22,14 @@ class VewReportScreen extends StatefulWidget {
 
 class _VewReportScreenState extends State<VewReportScreen> {
   final controller = SerialPortService.instance;
-  List<String> _mapList = [
-    "All",
-    "Google Maps",
-    "Apple Maps",
-    "Bing Maps",
-    "OpenStreetMap"
-  ];
-  String? _selectedMap; // Variable to store the selected map
-  List<String> _shiftList = ["All", "A", "B", "C", "D"];
-  String? _selectedShift; // Variable to store the selected map
+  final ProductRepository _productRepository = ProductRepository();
+  final ShiftRepository _shiftRepository = ShiftRepository();
+   List<Product> _productList=[];
+  List<Shift> _shiftList=[];
+  Product? _selectedProduct;
+  List<String> _listbay = ["01","02"];
+  Shift? _selectedShift;
+  String? _selectedBay;
   DateTime? _fromDate;
   DateTime? _toDate;
   TimeOfDay? _fromTime;
@@ -49,7 +53,6 @@ class _VewReportScreenState extends State<VewReportScreen> {
       });
     }
   }
-
   Future<void> _selectTime(BuildContext context, bool isFromTime) async {
     final TimeOfDay? pickedTime = await showTimePicker(
       context: context,
@@ -67,6 +70,24 @@ class _VewReportScreenState extends State<VewReportScreen> {
     }
   }
 
+  _getFilteredData(
+      DateTime? _startDate,
+      DateTime? _endDate,
+      TimeOfDay? _startTime,
+      TimeOfDay? _endTime,
+      String? _brand,
+      String? _bay,
+      ) async {
+  await controller.getAllReadingWithFilter(
+      startDate: _startDate,
+      endDate: _endDate,
+      startTime: _startTime,
+      endTime: _endTime,
+      brand: _brand,
+      bay: _bay,
+    );
+
+  }
 
   @override
   void initState() {
@@ -76,40 +97,26 @@ class _VewReportScreenState extends State<VewReportScreen> {
   }
 
   init() async {
+    _loadProducts();
+    _loadShifts();
     controller.getAllReadingData();
+
   }
 
+  void _loadProducts() async {
+    _productList = await _productRepository.getAllProducts();
+    setState(() {});
+  }
+  void _loadShifts() async{
+    _shiftList = await _shiftRepository.getAllShifts();
+
+    setState(() {});
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white60,
-      // appBar: AppBar(
-      //   title: const Text(
-      //     "View Report",
-      //     style: TextStyle(
-      //       fontSize: 20,
-      //       fontWeight: FontWeight.bold,
-      //       color: Colors.blue,
-      //     ),
-      //   ),
-      //   centerTitle: true,
-      //   actions: [
-      //     IconButton(
-      //       icon: Icon(Icons.refresh, color: Colors.blue),
-      //       onPressed: () {
-      //         controller.getAllReadingData(); // Refresh data
-      //       },
-      //     ),
-      //  IconButton(
-      //       icon: Icon(Icons.picture_as_pdf, color: Colors.blue),
-      //       onPressed: () {
-      //         controller.getAllReadingData(); // Refresh data
-      //       },
-      //     ),
-      //   ],
-      // ),
       body: Container(
-       // color: Colors.white,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -332,37 +339,38 @@ class _VewReportScreenState extends State<VewReportScreen> {
                                                     borderRadius:
                                                     BorderRadius.circular(4),
                                                   ),
-                                                  child: DropdownButton<String>(
-                                                    value:
-                                                    _selectedMap, // Currently selected value
-                                                    isExpanded:
-                                                    true, // Makes the dropdown take full width
-                                                    underline:
-                                                    SizedBox(), // Removes the default underline
-                                                    items: _mapList
-                                                        .map<DropdownMenuItem<String>>(
-                                                            (String value) {
-                                                          return DropdownMenuItem<String>(
-                                                            value: value,
-                                                            child: Text(
-                                                              value,
-                                                              style: TextStyle(
-                                                                  color: Colors.black45,
-                                                                  fontSize: 12),
-                                                            ),
-                                                          );
-                                                        }).toList(),
-                                                    onChanged: (String? newValue) {
+                                                  child: DropdownButton<Product>(
+                                                    value: _selectedProduct,
+                                                    isExpanded: true,
+                                                    underline: SizedBox(),
+                                                    items: _productList.map<DropdownMenuItem<Product>>((Product product) {
+                                                      return DropdownMenuItem<Product>(
+                                                        value: product,
+                                                        child: Text(
+                                                          product.name,
+                                                          style: TextStyle(
+                                                            color: Colors.black45,
+                                                            fontSize: 12,
+                                                            decoration: TextDecoration.none,
+                                                          ),
+                                                        ),
+                                                      );
+                                                    }).toList(),
+                                                    onChanged: (Product? newValue) {
                                                       setState(() {
-                                                        _selectedMap =
-                                                            newValue; // Update the selected value
+                                                        _selectedProduct = newValue; // Update the selected value
                                                       });
                                                     },
-                                                    hint: Text("Select",
-                                                        style: TextStyle(
-                                                            color: Colors.black45,
-                                                            fontSize: 12)),
+                                                    hint: Text(
+                                                      "Select",
+                                                      style: TextStyle(
+                                                        color: Colors.black45,
+                                                        fontSize: 12,
+                                                        decoration: TextDecoration.none, // Ensures no line appears
+                                                      ),
+                                                    ),
                                                   ),
+
                                                 ),
                                               ],
                                             ),
@@ -374,7 +382,7 @@ class _VewReportScreenState extends State<VewReportScreen> {
                                               CrossAxisAlignment.start,
                                               children: [
                                                 // Title for the dropdown
-                                                Text("Shift",
+                                                Text("Bay",
                                                     style:
                                                     TextStyle(color: Colors.black54)),
                                                 SizedBox(height: 8),
@@ -391,12 +399,12 @@ class _VewReportScreenState extends State<VewReportScreen> {
                                                   ),
                                                   child: DropdownButton<String>(
                                                     value:
-                                                    _selectedShift, // Currently selected value
+                                                    _selectedBay, // Currently selected value
                                                     isExpanded:
                                                     true, // Makes the dropdown take full width
                                                     underline:
                                                     SizedBox(), // Removes the default underline
-                                                    items: _shiftList
+                                                    items: _listbay
                                                         .map<DropdownMenuItem<String>>(
                                                             (String value) {
                                                           return DropdownMenuItem<String>(
@@ -411,7 +419,7 @@ class _VewReportScreenState extends State<VewReportScreen> {
                                                         }).toList(),
                                                     onChanged: (String? newValue) {
                                                       setState(() {
-                                                        _selectedShift =
+                                                        _selectedBay =
                                                             newValue; // Update the selected value
                                                       });
                                                     },
@@ -431,24 +439,38 @@ class _VewReportScreenState extends State<VewReportScreen> {
                                       Row(
                                         children: [
                                           Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
                                             children: [
-                                              Radio(
-                                                  value: true,
-                                                  groupValue: true,
-                                                  onChanged: (val) {}),
-                                              Text('Hourly'),
-                                              SizedBox(width: 16),
-                                              Radio(
-                                                  value: false,
-                                                  groupValue: true,
-                                                  onChanged: (val) {}),
-                                              Text('Shift-wise'),
-                                              SizedBox(width: 16),
-                                              Radio(
-                                                  value: false,
-                                                  groupValue: true,
-                                                  onChanged: (val) {}),
-                                              Text('Day-wise'),
+                                              // PDF option
+                                              GestureDetector(
+                                                onTap: () {
+                                                  // Handle PDF action
+                                                  exportReadingsToPdf(controller.readingWithCountList);
+                                                  print('PDF File tapped');
+                                                },
+                                                child: Column(
+                                                  children: [
+                                                    Image.asset('images/pdf.png', width: 30, height: 30),
+                                                    Text('PDF File', style: TextStyle(fontSize: 12)),
+                                                  ],
+                                                ),
+                                              ),
+
+                                              SizedBox(width: 30), // Add some space between PDF and Excel
+
+                                              // Excel option
+                                              GestureDetector(
+                                                onTap: () {
+                                                  exportReadingsToExcel(controller.readingWithCountList);
+                                                  print('Excel File tapped');
+                                                },
+                                                child: Column(
+                                                  children: [
+                                                    Image.asset('images/xls.png', width: 30, height: 30),
+                                                    Text('Excel File', style: TextStyle(fontSize: 12)),
+                                                  ],
+                                                ),
+                                              ),
                                             ],
                                           ),
                                           Spacer(),
@@ -456,7 +478,13 @@ class _VewReportScreenState extends State<VewReportScreen> {
                                             width: 150,
                                             margin: EdgeInsets.only(right: 50),
                                             child: ElevatedButton(
-                                              onPressed: () {},
+                                              onPressed: () {
+                                                _getFilteredData(_fromDate, _toDate,
+                                                    _fromTime,
+                                                    _toTime,
+                                                    _selectedProduct?.brand.toString(),
+                                                    _selectedBay);
+                                              },
                                               style: ElevatedButton.styleFrom(
                                                 backgroundColor: Colors.blue,
                                                 shape: RoundedRectangleBorder(
@@ -467,6 +495,27 @@ class _VewReportScreenState extends State<VewReportScreen> {
                                               ),
                                               child: Text("Apply",
                                                   style: TextStyle(color: Colors.white)),
+
+                                            ),
+                                          ),
+                                          Container(
+                                            width: 150,
+                                            margin: EdgeInsets.only(right: 50),
+                                            child: ElevatedButton(
+                                              onPressed: () {
+                                                controller.getAllReadingData();
+                                              },
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: Colors.blue,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                padding: EdgeInsets.symmetric(
+                                                    horizontal: 24, vertical: 16),
+                                              ),
+                                              child: Text("Clear",
+                                                  style: TextStyle(color: Colors.white)),
+
                                             ),
                                           ),
                                         ],
@@ -483,580 +532,73 @@ class _VewReportScreenState extends State<VewReportScreen> {
                   ),
                 ],
               ),
-
-
-              // Row(
-              //   children: [
-              //     Expanded(
-              //       child: Center(
-              //         child: Container(
-              //           padding: EdgeInsets.all(16),
-              //           decoration: BoxDecoration(
-              //             borderRadius: BorderRadius.circular(12),
-              //             border:
-              //             Border.all(color: Colors.grey[300]!, width: 1),
-              //             color: Colors.white,
-              //           ),
-              //           width: MediaQuery.of(context).size.width * 0.9,
-              //           child: Column(
-              //             crossAxisAlignment: CrossAxisAlignment.stretch,
-              //             children: [
-              //               // Row 1: Input Fields
-              //               Row(
-              //                 children: [
-              //                   Expanded(
-              //                     child: Column(
-              //                       crossAxisAlignment:
-              //                       CrossAxisAlignment.start,
-              //                       children: [
-              //                         Text("From Date",
-              //                             style:
-              //                             TextStyle(color: Colors.black54)),
-              //                         SizedBox(height: 8),
-              //                         GestureDetector(
-              //                           onTap: () => _selectDate(context, true),
-              //                           child: Container(
-              //                             width: 120,
-              //                             padding: EdgeInsets.symmetric(
-              //                                 vertical: 8, horizontal: 8),
-              //                             decoration: BoxDecoration(
-              //                               border:
-              //                               Border.all(color: Colors.grey),
-              //                               borderRadius:
-              //                               BorderRadius.circular(4),
-              //                             ),
-              //                             child: Text(
-              //                               _fromDate != null
-              //                                   ? "${_fromDate!.day}/${_fromDate!.month}/${_fromDate!.year}"
-              //                                   : "DD/MM/YYYY",
-              //                               style: TextStyle(
-              //                                   color: Colors.black45,
-              //                                   fontSize: 12),
-              //                             ),
-              //                           ),
-              //                         ),
-              //                       ],
-              //                     ),
-              //                   ),
-              //                   Expanded(
-              //                     child: Column(
-              //                       crossAxisAlignment:
-              //                       CrossAxisAlignment.start,
-              //                       children: [
-              //                         Text("TO Date",
-              //                             style:
-              //                             TextStyle(color: Colors.black54)),
-              //                         SizedBox(height: 8),
-              //                         GestureDetector(
-              //                           onTap: () =>
-              //                               _selectDate(context, false),
-              //                           child: Container(
-              //                             width: 120,
-              //                             padding: EdgeInsets.symmetric(
-              //                                 vertical: 8, horizontal: 8),
-              //                             decoration: BoxDecoration(
-              //                               border:
-              //                               Border.all(color: Colors.grey),
-              //                               borderRadius:
-              //                               BorderRadius.circular(4),
-              //                             ),
-              //                             child: Text(
-              //                               _toDate != null
-              //                                   ? "${_toDate!.day}/${_toDate!.month}/${_toDate!.year}"
-              //                                   : "DD/MM/YYYY",
-              //                               style: TextStyle(
-              //                                   color: Colors.black45,
-              //                                   fontSize: 12),
-              //                             ),
-              //                           ),
-              //                         ),
-              //                       ],
-              //                     ),
-              //                   ),
-              //                   Expanded(
-              //                     child: Column(
-              //                       crossAxisAlignment:
-              //                       CrossAxisAlignment.start,
-              //                       children: [
-              //                         Text("From Time",
-              //                             style:
-              //                             TextStyle(color: Colors.black54)),
-              //                         SizedBox(height: 8),
-              //                         GestureDetector(
-              //                           onTap: () => _selectTime(context, true),
-              //                           child: Container(
-              //                             width: 120,
-              //                             padding: EdgeInsets.symmetric(
-              //                                 vertical: 8, horizontal: 8),
-              //                             decoration: BoxDecoration(
-              //                               border:
-              //                               Border.all(color: Colors.grey),
-              //                               borderRadius:
-              //                               BorderRadius.circular(4),
-              //                             ),
-              //                             child: Text(
-              //                               _fromTime != null
-              //                                   ? "${_fromTime!.hour}:${_fromTime!.minute.toString().padLeft(2, '0')}"
-              //                                   : "HH:MM",
-              //                               style: TextStyle(
-              //                                   color: Colors.black45,
-              //                                   fontSize: 12),
-              //                             ),
-              //                           ),
-              //                         ),
-              //                       ],
-              //                     ),
-              //                   ),
-              //                   Expanded(
-              //                     child: Column(
-              //                       crossAxisAlignment:
-              //                       CrossAxisAlignment.start,
-              //                       children: [
-              //                         Text("To Time",
-              //                             style:
-              //                             TextStyle(color: Colors.black54)),
-              //                         SizedBox(height: 8),
-              //                         GestureDetector(
-              //                           onTap: () =>
-              //                               _selectTime(context, false),
-              //                           child: Container(
-              //                             width: 120,
-              //                             padding: EdgeInsets.symmetric(
-              //                                 vertical: 8, horizontal: 8),
-              //                             decoration: BoxDecoration(
-              //                               border:
-              //                               Border.all(color: Colors.grey),
-              //                               borderRadius:
-              //                               BorderRadius.circular(4),
-              //                             ),
-              //                             child: Text(
-              //                               _toTime != null
-              //                                   ? "${_toTime!.hour}:${_toTime!.minute.toString().padLeft(2, '0')}"
-              //                                   : "HH:MM",
-              //                               style: TextStyle(
-              //                                   color: Colors.black45,
-              //                                   fontSize: 12),
-              //                             ),
-              //                           ),
-              //                         ),
-              //                       ],
-              //                     ),
-              //                   ),
-              //                   Expanded(
-              //                     child: Column(
-              //                       crossAxisAlignment:
-              //                       CrossAxisAlignment.start,
-              //                       children: [
-              //                         // Title for the dropdown
-              //                         Text("Brand",
-              //                             style:
-              //                             TextStyle(color: Colors.black54)),
-              //                         SizedBox(height: 8),
-              //                         // Dropdown for selecting a map
-              //                         Container(
-              //                           height: 35,
-              //                           padding: EdgeInsets.symmetric(
-              //                               vertical: 8, horizontal: 8),
-              //                           decoration: BoxDecoration(
-              //                             border:
-              //                             Border.all(color: Colors.grey),
-              //                             borderRadius:
-              //                             BorderRadius.circular(4),
-              //                           ),
-              //                           child: DropdownButton<String>(
-              //                             value:
-              //                             _selectedMap, // Currently selected value
-              //                             isExpanded:
-              //                             true, // Makes the dropdown take full width
-              //                             underline:
-              //                             SizedBox(), // Removes the default underline
-              //                             items: _mapList
-              //                                 .map<DropdownMenuItem<String>>(
-              //                                     (String value) {
-              //                                   return DropdownMenuItem<String>(
-              //                                     value: value,
-              //                                     child: Text(
-              //                                       value,
-              //                                       style: TextStyle(
-              //                                           color: Colors.black45,
-              //                                           fontSize: 12),
-              //                                     ),
-              //                                   );
-              //                                 }).toList(),
-              //                             onChanged: (String? newValue) {
-              //                               setState(() {
-              //                                 _selectedMap =
-              //                                     newValue; // Update the selected value
-              //                               });
-              //                             },
-              //                             hint: Text("Select",
-              //                                 style: TextStyle(
-              //                                     color: Colors.black45,
-              //                                     fontSize: 12)),
-              //                           ),
-              //                         ),
-              //                       ],
-              //                     ),
-              //                   ),
-              //                   SizedBox(width: 10),
-              //                   Expanded(
-              //                     child: Column(
-              //                       crossAxisAlignment:
-              //                       CrossAxisAlignment.start,
-              //                       children: [
-              //                         // Title for the dropdown
-              //                         Text("Shift",
-              //                             style:
-              //                             TextStyle(color: Colors.black54)),
-              //                         SizedBox(height: 8),
-              //                         // Dropdown for selecting a map
-              //                         Container(
-              //                           height: 35,
-              //                           padding: EdgeInsets.symmetric(
-              //                               vertical: 8, horizontal: 8),
-              //                           decoration: BoxDecoration(
-              //                             border:
-              //                             Border.all(color: Colors.grey),
-              //                             borderRadius:
-              //                             BorderRadius.circular(4),
-              //                           ),
-              //                           child: DropdownButton<String>(
-              //                             value:
-              //                             _selectedShift, // Currently selected value
-              //                             isExpanded:
-              //                             true, // Makes the dropdown take full width
-              //                             underline:
-              //                             SizedBox(), // Removes the default underline
-              //                             items: _shiftList
-              //                                 .map<DropdownMenuItem<String>>(
-              //                                     (String value) {
-              //                                   return DropdownMenuItem<String>(
-              //                                     value: value,
-              //                                     child: Text(
-              //                                       value,
-              //                                       style: TextStyle(
-              //                                           color: Colors.black45,
-              //                                           fontSize: 12),
-              //                                     ),
-              //                                   );
-              //                                 }).toList(),
-              //                             onChanged: (String? newValue) {
-              //                               setState(() {
-              //                                 _selectedShift =
-              //                                     newValue; // Update the selected value
-              //                               });
-              //                             },
-              //                             hint: Text("Select",
-              //                                 style: TextStyle(
-              //                                     color: Colors.black45,
-              //                                     fontSize: 12)),
-              //                           ),
-              //                         ),
-              //                       ],
-              //                     ),
-              //                   ),
-              //                 ],
-              //               ),
-              //               SizedBox(height: 20),
-              //               // Row 2: Radio Buttons and Apply Button
-              //               Row(
-              //                 children: [
-              //                   Row(
-              //                     children: [
-              //                       Radio(
-              //                           value: true,
-              //                           groupValue: true,
-              //                           onChanged: (val) {}),
-              //                       Text('Hourly'),
-              //                       SizedBox(width: 16),
-              //                       Radio(
-              //                           value: false,
-              //                           groupValue: true,
-              //                           onChanged: (val) {}),
-              //                       Text('Shift-wise'),
-              //                       SizedBox(width: 16),
-              //                       Radio(
-              //                           value: false,
-              //                           groupValue: true,
-              //                           onChanged: (val) {}),
-              //                       Text('Day-wise'),
-              //                     ],
-              //                   ),
-              //                   Spacer(),
-              //                   Container(
-              //                     width: 150,
-              //                     margin: EdgeInsets.only(right: 50),
-              //                     child: ElevatedButton(
-              //                       onPressed: () {},
-              //                       style: ElevatedButton.styleFrom(
-              //                         backgroundColor: Colors.blue,
-              //                         shape: RoundedRectangleBorder(
-              //                           borderRadius: BorderRadius.circular(8),
-              //                         ),
-              //                         padding: EdgeInsets.symmetric(
-              //                             horizontal: 24, vertical: 16),
-              //                       ),
-              //                       child: Text("Apply",
-              //                           style: TextStyle(color: Colors.white)),
-              //                     ),
-              //                   ),
-              //                 ],
-              //               ),
-              //             ],
-              //           ),
-              //         ),
-              //       ),
-              //     ),
-              //   ],
-              // ),
-              //....................
-              // Padding(
-              //   padding: const EdgeInsets.all(8.0),
-              //   child: Row(
-              //     crossAxisAlignment: CrossAxisAlignment.start,
-              //     children: [
-              //       Container(
-              //         width: 150,
-              //         child: ElevatedButton(
-              //           onPressed: () {},
-              //           style: ElevatedButton.styleFrom(
-              //             backgroundColor: Colors.blue,
-              //             shape: RoundedRectangleBorder(
-              //               borderRadius: BorderRadius.circular(8),
-              //             ),
-              //             padding: EdgeInsets.symmetric(
-              //                 horizontal: 24, vertical: 16),
-              //           ),
-              //           child: Text("Excel Download",
-              //               style: TextStyle(color: Colors.white)),
-              //         ),
-              //       ),
-              //       SizedBox(width: 20),
-              //       SizedBox(
-              //         width: 150,
-              //         child: ElevatedButton(
-              //           onPressed: () {},
-              //           style: ElevatedButton.styleFrom(
-              //             backgroundColor: Colors.blue,
-              //             shape: RoundedRectangleBorder(
-              //               borderRadius: BorderRadius.circular(8),
-              //             ),
-              //             padding: EdgeInsets.symmetric(
-              //                 horizontal: 24, vertical: 16),
-              //           ),
-              //           child: Text("PDF Downloan",
-              //               style: TextStyle(color: Colors.white)),
-              //         ),
-              //       )
-              //     ],
-              //   ),
-              // ),
               SizedBox(height: 10),
-              //show filter data
-              // Row(
-              //   children: [
-              //     Row(
-              //       children: [
-              //         Text(
-              //           "Date: ",
-              //           style: TextStyle(
-              //               fontWeight: FontWeight.bold, fontSize: 16),
-              //         ),
-              //         Text(
-              //           "02/07/2024",
-              //           style: TextStyle(fontSize: 16),
-              //         ),
-              //         Text(
-              //           " To ",
-              //           style: TextStyle(fontSize: 16),
-              //         ),
-              //         Text(
-              //           "02/07/2024",
-              //           style: TextStyle(fontSize: 16),
-              //         ),
-              //       ],
-              //     ),
-              //     SizedBox(width: 15),
-              //     Row(
-              //       children: [
-              //         Text(
-              //           "Time: ",
-              //           style: TextStyle(
-              //               fontWeight: FontWeight.bold, fontSize: 16),
-              //         ),
-              //         Text(
-              //           "00:00",
-              //           style: TextStyle(fontSize: 16),
-              //         ),
-              //         Text(
-              //           " To ",
-              //           style: TextStyle(fontSize: 16),
-              //         ),
-              //         Text(
-              //           "23:59",
-              //           style: TextStyle(fontSize: 16),
-              //         ),
-              //       ],
-              //     ),
-              //     SizedBox(width: 15),
-              //     Row(
-              //       children: [
-              //         Text(
-              //           "Brand: ",
-              //           style: TextStyle(
-              //               fontWeight: FontWeight.bold, fontSize: 16),
-              //         ),
-              //         Text(
-              //           "All",
-              //           style: TextStyle(fontSize: 16),
-              //         ),
-              //       ],
-              //     ),
-              //     SizedBox(width: 15),
-              //     Row(
-              //       children: [
-              //         Text(
-              //           "Shift: ",
-              //           style: TextStyle(
-              //               fontWeight: FontWeight.bold, fontSize: 16),
-              //         ),
-              //         Text(
-              //           "All",
-              //           style: TextStyle(
-              //             fontSize: 16,
-              //           ),
-              //         ),
-              //       ],
-              //     ),
-              //     SizedBox(width: 15),
-              //     Text(
-              //       "Reset Filter",
-              //       style: TextStyle(
-              //           fontSize: 16,
-              //           fontWeight: FontWeight.bold,
-              //           color: Colors.red[700]),
-              //     ),
-              //   ],
-              // ),
-              // SizedBox(height: 20),
-          Obx(()=>Expanded(
-            child: SingleChildScrollView(
-              child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12), // Rounded corners for the DataTable
-                  child: PaginatedDataTable(
-                    //  header: Text('Reading Data Table'),
-                    // headingRowColor: MaterialStateColor.resolveWith((states) => Colors.white), // White header background
+              Obx(() {
+                if (controller.readingWithCountList.isEmpty) {
+                  return Center(child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      SizedBox(height: 20,),
+                      Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.all(
+                               Radius.circular(20)
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: Offset(2, 0), // Shadow to the right
+                              ),
+                            ],
+                          ),
+                          child: Image.asset('images/no_data_img.png', width: 200, height: 200)),
 
-                    columns: const [
-                      DataColumn(label:Text('Bay'),),
-                      DataColumn(label: Text('Brand')),
-                      DataColumn(label: Text('Ton')),
-                      DataColumn(label: Text('MRP')),
-                      DataColumn(label: Text('Truck No.')),
-                      DataColumn(label: Text('Date')),
-                      DataColumn(label: Text('Time')),
-                      DataColumn(label: Text('Allotted\nBags')),
-                      DataColumn(label: Text('Remain\nBags')),
-                      DataColumn(label: Text('Extra\nBags')),
+                      SizedBox(height: 10,),
+                      Text("No data available",
+                          style:
+                          TextStyle(color: Colors.black54, fontSize: 20, fontWeight: FontWeight.bold)),
                     ],
-                    source: ReadingDataTableSource(),
-                    rowsPerPage:  controller.readingWithCountList.length<10? controller.readingWithCountList.length:8, // Number of rows per page
-                  )
-                // child:  DataTable(
-                //   headingRowColor: MaterialStateColor.resolveWith((states) => Colors.grey.shade100), // Title row color
-                //   dataRowColor: MaterialStateColor.resolveWith((states) => Colors.white), // Data row color
-                //   //columnSpacing: 10,
-                //   columnSpacing: 10,
-                //   columns: const [
-                //     DataColumn(label:Text('Bay'),),
-                //     DataColumn(label: Text('Brand')),
-                //     DataColumn(label: Text('Ton')),
-                //     DataColumn(label: Text('MRP')),
-                //     DataColumn(label: Text('Truck No.')),
-                //     DataColumn(label: Text('Start Date')),
-                //    DataColumn(label: Text('Time')),
-                //     DataColumn(label: Text('Allotted\nBags')),
-                //     DataColumn(label: Text('Remain\nBags')),
-                //     DataColumn(label: Text('Extra\nBags')),
-                //   ],
-                //   rows: List.generate(
-                //     controller.readingWithCountList.length,
-                //         (index) => recentFileDataRow(controller.readingWithCountList[index]),
-                //   ),
-                //
-                // ),
+                  ));
+                }
+                return Expanded(
+                  child: SingleChildScrollView(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12), // Rounded corners for the DataTable
+                      child: PaginatedDataTable(
+                        columns: const [
+                          DataColumn(label: Text('Bay')),
+                          DataColumn(label: Text('Brand')),
+                          DataColumn(label: Text('Ton')),
+                          DataColumn(label: Text('MRP')),
+                          DataColumn(label: Text('Truck No.')),
+                          DataColumn(label: Text('Date')),
+                          DataColumn(label: Text('Time')),
+                          DataColumn(label: Text('Allotted\nBags')),
+                          DataColumn(label: Text('Remain\nBags')),
+                          DataColumn(label: Text('Extra\nBags')),
+                        ],
+                        source: ReadingDataTableSource(),
+                        rowsPerPage: controller.readingWithCountList.length < 10
+                            ? controller.readingWithCountList.length
+                            : 8, // Number of rows per page
+                      ),
+                    ),
+                  ),
+                );
+              })
 
-              ),
-            ),
-          ))
 
-             //) ,
+              //) ,
             ],
           ),
         ),
       ),
     );
   }
- //  DataRow recentFileDataRow(ReadingWithCount truckData) {
- //    return DataRow(
- //        cells: [
- //          DataCell(Text(truckData.bay)),  //bat
- //          DataCell(Text(truckData.brand)), //brand
- //          DataCell(Text(truckData.ton.toString())), //ton
- //          DataCell(Text(truckData.mrp.toString())), //mrp
- //          DataCell(Text(truckData.truckNo.toString())), //truckNo
- //          DataCell(Text(getDate(truckData.timestamp))),
- //         DataCell(Text(getTime(truckData.readingCountTimestamp))),
- //          DataCell(Text(truckData.allottedBag.toString())),
- //         int.parse(truckData.count ) <0? DataCell(Text('0')):
- //          DataCell(Text(truckData.count.toString())),
- //          int.parse(truckData.count)<0?
- //          DataCell(Text(  truckData.count.toString())):DataCell(Text('0')),
- //
- //        ]);
- //  }
- //
- //  String getDate(String time) {
- //    DateTime dateTime = DateTime.parse(time);
- //    String formattedDate = DateFormat('dd/MM/yy').format(dateTime);
- //
- //    return formattedDate;
- //  }
- // String getTime(String time) {
- //    DateTime dateTime = DateTime.parse(time);
- //    String formattedDate = DateFormat('HH:mm').format(dateTime);
- //
- //    return formattedDate;
- //  }
 }
 
-
-// Your Data Model (Adjust based on your actual model)
-// class ReadingWithCount {
-//   final String bay;
-//   final String brand;
-//   final String ton;
-//   final String mrp;
-//   final String truckNo;
-//   final String startTime;
-//   final String runningTime;
-//   final String bagsCount;
-//   final String extraBags;
-//
-//   ReadingWithCount({
-//     required this.bay,
-//     required this.brand,
-//     required this.ton,
-//     required this.mrp,
-//     required this.truckNo,
-//     required this.startTime,
-//     required this.runningTime,
-//     required this.bagsCount,
-//     required this.extraBags,
-//   });
-// }
-//
-// // DataTableSource with GetX Support
 
 class ReadingDataTableSource extends DataTableSource {
 

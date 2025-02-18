@@ -36,11 +36,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
 
     return Scaffold(
-      backgroundColor: Colors.grey[100],
-      // appBar: AppBar(
-      //   title: const Text('BagCount Profile'),
-      //   centerTitle: true,
-      // ),
+      backgroundColor: Colors.white60,
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

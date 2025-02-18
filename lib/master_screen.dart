@@ -37,7 +37,7 @@ class _MasterScreenState extends State<MasterScreen> {
     'Shift Settings',
     'Product Management',
     'View Report',
-    'Profile',
+    'About us',
     'Logout'
   ];
 
@@ -102,7 +102,7 @@ class _MasterScreenState extends State<MasterScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "RCCPL Pvt. Ltd. Btibory(GU)",
+                        "RCCPL Pvt. Ltd. Butibori (GU)",
                         style: TextStyle(fontSize: 18, color: Colors.blue, fontWeight: FontWeight.bold),
                       ),
 
@@ -181,7 +181,7 @@ class SideMenu extends StatelessWidget {
               _buildDrawerItem("Shift", "images/icons/menu_doc.svg", 2,context),
               _buildDrawerItem("Brand", "images/icons/pdf_file.svg", 3,context),
               _buildDrawerItem("View Report", "images/icons/menu_tran.svg", 4,context),
-              _buildDrawerItem("Profile", "images/icons/menu_profile.svg", 5,context),
+              _buildDrawerItem("About Us", "images/icons/menu_profile.svg", 5,context),
               _buildDrawerItem("Logout", "images/icons/menu_store.svg", -1,context),
             ],
           ),

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -44,18 +45,84 @@ class ReadingRepository extends GetxService  {
     }
   }
 
+  Future<List<ReadingWithCount>> getAllReadingsWithFilter({
+    DateTime? startDate,
+    DateTime? endDate,
+    TimeOfDay? startTime,
+    TimeOfDay? endTime,
+    String? brand,
+    String? bay,
 
-
-
-  // Get all readings
-  Future<List<Reading>> getAllReadings() async {
+  })
+  async {
     try {
       final db = await _databaseHelper.database;
-      final List<Map<String, dynamic>> maps = await db.query('Reading');
+
+      // Construct WHERE clause and arguments dynamically
+      List<String> whereClauses = [
+        "r.id IS NOT NULL",
+        "rc.readingId IS NOT NULL"
+      ];
+      List<dynamic> whereArgs = [];
+
+      if (startDate != null) {
+        whereClauses.add("DATE(r.timestamp) >= ?");
+        whereArgs.add(startDate.toIso8601String().split('T')[0]); // Extract date
+      }
+      if (endDate != null) {
+        whereClauses.add("DATE(r.timestamp) <= ?");
+        whereArgs.add(endDate.toIso8601String().split('T')[0]); // Extract date
+      }
+      // Convert TimeOfDay to HH:mm format
+      String formatTimeOfDay(TimeOfDay time) {
+        return "${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}";
+      }
+
+      // Time filters using SQLite strftime
+      if (startTime != null) {
+        whereClauses.add("strftime('%H:%M', r.timestamp) >= ?");
+        whereArgs.add(formatTimeOfDay(startTime));
+      }
+      if (endTime != null) {
+        whereClauses.add("strftime('%H:%M', r.timestamp) <= ?");
+        whereArgs.add(formatTimeOfDay(endTime));
+      }
+      if (brand != null) {
+        whereClauses.add("r.brand = ?");
+        whereArgs.add(brand);
+      }
+      if (bay != null) {
+        whereClauses.add("r.bay = ?");
+        whereArgs.add(bay);
+      }
+
+      // Combine clauses
+      String whereClause = whereClauses.join(" AND ");
+
+      final List<Map<String, dynamic>> maps = await db.rawQuery('''
+      SELECT 
+        r.id, 
+        r.timestamp, 
+        r.bay, 
+        r.truckNo, 
+        r.brand, 
+        r.mrp, 
+        r.ton, 
+        r.allottedBag, 
+        rc.count, 
+        rc.timestamp AS readingCountTimestamp 
+      FROM Reading r
+      INNER JOIN ReadingCount rc ON r.id = rc.readingId
+      WHERE $whereClause
+      ORDER BY r.timestamp
+    ''', whereArgs);
+
+      print("Query : $whereClause");
+      print("Query : $whereArgs");
       print("Readings from DB: $maps");
-      return maps.map((map) => Reading.fromJson(map)).toList();
+      return maps.map((map) => ReadingWithCount.fromJson(map)).toList();
     } catch (e) {
-      print('Error inserting reading: $e');
+      print('Error fetching readings: $e');
       return [];
     }
   }

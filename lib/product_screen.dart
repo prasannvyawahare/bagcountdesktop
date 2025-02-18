@@ -36,7 +36,7 @@ class _ProductScreenState extends State<ProductScreen> {
     final product = Product(
       name: _productNameController.text,
       description: 'Description here',
-      brand: 'Brand here',
+      brand:_productPriceController.text,
       brand_code: 99,
     );
 
@@ -90,20 +90,8 @@ class _ProductScreenState extends State<ProductScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
-      // appBar: AppBar(
-      //   title: const Text(
-      //     "Brand ",
-      //     style: TextStyle(
-      //       fontSize: 20,
-      //       fontWeight: FontWeight.bold,
-      //       color: Colors.blue,
-      //     ),
-      //   ),
-      //   centerTitle: true,
-      // ),
+      backgroundColor: Colors.white60,
       body: Container(
-        color: Colors.white,
 
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -139,7 +127,22 @@ class _ProductScreenState extends State<ProductScreen> {
                           children: [
                             _buildTextField('Brand Name', _productNameController),
                             const SizedBox(height: 10),
-                            _buildTextField('Brand Code', _productPriceController),
+                            TextField(
+                              controller: _productPriceController,
+                              maxLength: 3,
+                              decoration: InputDecoration(
+                                counterText: '',
+                                labelText: 'Brand Code',
+                                filled: true,
+                                fillColor: Colors.grey[200],
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide.none,
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              ),
+                              style: const TextStyle(fontSize: 14),
+                            ),
                             const SizedBox(height: 20),
                             ElevatedButton(
                               onPressed: _addProduct,

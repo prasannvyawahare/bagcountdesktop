@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:ffi';
+import 'package:flutter/material.dart';
 import 'package:flutter_libserialport/flutter_libserialport.dart';
 import 'package:get/get.dart';
 import '../model/reading.dart';
@@ -248,6 +249,25 @@ class SerialPortService extends GetxController  {
       throw Exception('Error parsing data: $e');
     }
   }
+
+  getAllReadingWithFilter(
+  {DateTime? startDate,
+      DateTime? endDate,
+    TimeOfDay? startTime,
+    TimeOfDay? endTime,
+      String? brand,
+      String? bay,}
+      ) async{
+    List<ReadingWithCount> readingsWithC=  await readingRepository.getAllReadingsWithFilter(
+      startTime: startTime,startDate: startDate,endTime:endTime,endDate: endDate,brand: brand,bay: bay
+    );
+    for(ReadingWithCount read1 in readingsWithC){
+      print("read1.count ${read1.count}");
+    }
+   readingWithCountList.assignAll(readingsWithC.reversed);
+    readingWithCountList.refresh();
+  }
+
 
   getAllReadingData() async {
 try {
