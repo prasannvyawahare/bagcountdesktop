@@ -47,6 +47,7 @@ class _ComSettingState extends State<ComSetting> {
   }
 
   Future<void> init() async {
+
     isConnect = await SharedPrefHelper.getBool(SharedPrefKeys.isConnect)??false;
     print(isConnect);
     if (mounted) {
@@ -81,26 +82,14 @@ class _ComSettingState extends State<ComSetting> {
       );
       return;
     }
+    await _serialService.listAvailablePorts();
+    await Future.delayed(Duration(seconds: 2));
+    isConnect = (await SharedPrefHelper.getBool(SharedPrefKeys.isConnect))!;
+    setState(() {});
     if (isConnect) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Already connected to $selectedPort')),
-      );
-      return;
-    }
-    bool isConnected = await _serialService.connectSerialPort(
-      portName: selectedPort!,
-      baudRate: int.tryParse(baudRateController.text) ?? 9600,
-      dataBits: int.tryParse(dataBitsController.text) ?? 8,
-      parity: parityController.text,
-      stopBits: int.tryParse(stopBitsController.text) ?? 1,
-    );
-    print("isConnected : $isConnected");
-    if (isConnected) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Connected to $selectedPort')),
       );
-      await SharedPrefHelper.saveBool(SharedPrefKeys.isConnect, true);
-      isConnect = true;
       if (mounted) {
         setState(() {
         });
@@ -115,7 +104,6 @@ class _ComSettingState extends State<ComSetting> {
   Future<void> _disconnectSerialPort() async {
     if (isConnect) {
       _serialService.disconnect();
-      //await SharedPrefHelper.saveBool(SharedPrefKeys.isConnect, false);
       isConnect = (await SharedPrefHelper.getBool(SharedPrefKeys.isConnect))!;
       readings.clear();
       if (mounted) {
@@ -133,16 +121,6 @@ class _ComSettingState extends State<ComSetting> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white60,
-      // appBar: AppBar(
-      //   title: const Text(
-      //     "Configure Serial Port",
-      //     style: TextStyle(
-      //       fontSize: 20,
-      //       fontWeight: FontWeight.bold,
-      //       color: Colors.blue,
-      //     ),
-      //   ),
-      // ),
       body: Container(
         //color: Colors.white,
         child: Padding(

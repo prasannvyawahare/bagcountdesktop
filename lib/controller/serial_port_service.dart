@@ -15,7 +15,6 @@ class SerialPortService extends GetxController  {
   static SerialPortService get instance => Get.find();
 
   RxList<ReadingWithCount> readingWithCountList = <ReadingWithCount>[].obs; // List to store readings
-  SerialPort? _serialPort;
   final StreamController<String> _dataController = StreamController<String>.broadcast();
   bool isConnected = false;
   StreamSubscription? _dataSubscription;
@@ -44,146 +43,123 @@ class SerialPortService extends GetxController  {
     readingRepository = await  Get.find<ReadingRepository>();
     readingCountRepository = await  Get.find<ReadingCountRepository>();
     getAllReadingData();
+    getNegativeCount();
   }
-  Future<bool> connectSerialPort({
-    required String portName,
-    required int baudRate,
-    required int dataBits,
-    required String parity,
-    required int stopBits,
-  })
-  async {
+  // 00000000000000000000000000000000000000000000000000000000000000000000
+  List<String> availablePorts = [];
+  SerialPort? port;
+  SerialPortReader? reader;
+  String receivedData = "No data received";
 
-    _serialPort = SerialPort(portName);
-    // Cancel any existing subscription
+  Future<void> listAvailablePorts() async {
+    availablePorts = SerialPort.availablePorts;
+    print('🔍 Available Ports: $availablePorts');
 
-    if (!_serialPort!.isOpen) {
-      final opened = _serialPort!.openReadWrite();
-      if (opened) {
-        _serialPort!.config.baudRate = baudRate;
-        _serialPort!.config.bits = dataBits;
-        _serialPort!.config.parity = _getParity(parity);
-        _serialPort!.config.stopBits = stopBits;
-        _serialPort!.config.setFlowControl(SerialPortFlowControl.none);
+    if (availablePorts.isNotEmpty) {
+      String selectedPort = availablePorts.first;
+      print("🔄 Using Port: $selectedPort");
+      openPort(selectedPort);
+    } else {
+      print("⚠️ No serial ports detected!");
+    }
+  }
 
-        isConnected = true;
-        await _dataSubscription?.cancel();
-        // Start reading data
-        final reader = SerialPortReader(_serialPort!);
-        // Start listening to new data
-        String _buffer = '';
-        String _buffer2 = '';
-        String currentReading='';
-        int readingId=0;
-        _dataSubscription = reader.stream.listen(
+  void openPort(String portName) async {
+   await disconnect(); // Close existing port before opening a new one
 
-              (data) async {
-               //await readingRepository.deleteAllReadings();
-                String receivedData = String.fromCharCodes(data);
-                _dataController.add(receivedData); // Send data to stream
-                _buffer += receivedData;
-                print("_buffer0 $_buffer");
-                if(_buffer.startsWith("*") && _buffer.length == 20){
-                  currentReading=_buffer;
-                  readingId= await parseRawData(_buffer);
-                  print("_buffer1 $_buffer");
-                  _currentReadingId=readingId;
-                  print("_currentReadingId $_currentReadingId");
-                  _buffer='';
-                }
+    port = SerialPort(portName);
+    if (!port!.openReadWrite()) {
+      return;
+    }
+    // Configure serial port
+    final config = SerialPortConfig()
+      ..baudRate = 9600
+      ..bits = 8
+      ..parity = SerialPortParity.none
+      ..stopBits = 1;
+    port!.config = config;
+    await SharedPrefHelper.saveBool(SharedPrefKeys.isConnect, true);
+    // Delay before reading data (fixes issue after restart)
+    await Future.delayed(Duration(seconds: 2));
 
-                // _debounceTimer1?.cancel();
-                // _debounceTimer1 = Timer(Duration(milliseconds: 200), () async {
-                //   RegExp regex = RegExp(r"[$#](-?\d+)"); // Updated regex
-                //  // RegExp regex = RegExp(r"[$#](?:\](-?\d+)|(-?\d+))"); // Updated regex
-                //   Iterable<Match> matches = regex.allMatches(_buffer);
-                //   print("_buffer $_buffer");
-                //   for (Match match in matches) {
-                //     String counterValue = match.group(1)!;
-                //     if (_currentReadingId == 0) continue;
-                //     print("counterValue $counterValue");
-                //     if (_lastCounts[_currentReadingId] != counterValue) {
-                //       var readingCount = ReadingCount(
-                //         count: counterValue,
-                //         readingId: _currentReadingId,
-                //         timestamp: DateTime.now().toIso8601String(),
-                //       );
-                //       var hash = await readingCountRepository.insertReadingCount(readingCount);
-                //       print("hash* $hash");
-                //       _lastCounts[_currentReadingId] = counterValue;
-                //       getAllReadingData();
-                //     }
-                //   }
-                //   _buffer = '';
-                // });
+    startReading();
+  }
 
-                _debounceTimer1?.cancel();
-                _debounceTimer1 = Timer(Duration(milliseconds: 200), () async {
-                  RegExp regex = RegExp(r"[$#](?:\](\d+)|(\d+))"); // Updated regex
-                  Iterable<Match> matches = regex.allMatches(_buffer);
-                  print("_buffer $_buffer");
-                  for (Match match in matches) {
-                    String? positiveValue = match.group(2); // Normal positive values
-                    String? negativeValue = match.group(1); // Values from `#]`
+  void startReading() {
+    print("📡 Listening for data...");
+    String _buffer = '';
+    String currentReading='';
+    int readingId=0;
+    reader = SerialPortReader(port!);
+    reader!.stream.listen((data) async {
+      String newData = String.fromCharCodes(data).trim();
+      if (newData.isNotEmpty) {
+        String receivedData = String.fromCharCodes(data);
+        _dataController.add(receivedData); // Send data to stream
+        _buffer += receivedData;
+        print("_buffer0 $_buffer");
+        if(_buffer.startsWith("*") && _buffer.length == 20){
+          currentReading=_buffer;
+          readingId= await parseRawData(_buffer);
+          print("_buffer1 $_buffer");
+          _currentReadingId=readingId;
+          print("_currentReadingId $_currentReadingId");
+          _buffer='';
+        }
+        _debounceTimer1?.cancel();
+        _debounceTimer1 = Timer(Duration(milliseconds: 200), () async {
+          RegExp regex = RegExp(r"[$#](?:\](\d+)|(\d+))"); // Updated regex
+          Iterable<Match> matches = regex.allMatches(_buffer);
+          print("_buffer $_buffer");
+          for (Match match in matches) {
+            String? positiveValue = match.group(2); // Normal positive values
+            String? negativeValue = match.group(1); // Values from `#]`
 
-                    String counterValue = negativeValue != null ? "-$negativeValue" : positiveValue!;
+            String counterValue = negativeValue != null ? "-$negativeValue" : positiveValue!;
 
-                    if (_currentReadingId == 0) continue;
-                    print("counterValue $counterValue");
+            if (_currentReadingId == 0) continue;
+            print("counterValue $counterValue");
 
-                    if (_lastCounts[_currentReadingId] != counterValue) {
-                      var readingCount = ReadingCount(
-                        count: counterValue,
-                        readingId: _currentReadingId,
-                        timestamp: DateTime.now().toIso8601String(),
-                      );
-                      var hash = await readingCountRepository.insertReadingCount(readingCount);
-                      print("hash* $hash");
-                      _lastCounts[_currentReadingId] = counterValue;
-                      getAllReadingData();
-                    }
-                  }
-                  _buffer = '';
-                });
+            if (_lastCounts[_currentReadingId] != counterValue) {
+              var readingCount = ReadingCount(
+                count: counterValue,
+                readingId: _currentReadingId,
+                timestamp: DateTime.now().toIso8601String(),
+              );
+              var hash = await readingCountRepository.insertReadingCount(readingCount);
+              print("hash* $hash");
+              _lastCounts[_currentReadingId] = counterValue;
+              getAllReadingData();
+            }
+          }
+          _buffer = '';
+        });
 
 
-              },
-          onError: (error) {
-            disconnect();
-            _dataController.addError('Error reading from serial port: $error');
-          },
-        );
-
-        return true;
+      } else {
+        print("⚠️ Received Empty Data!");
       }
-    }
-    return false;
+    }, onError: (error) {
+      print('❌ Serial Error: $error');
+      print("🔄 Restarting Serial Connection...");
+      //restartSerialPort();
+    });
   }
 
-  int _getParity(String parity) {
-    switch (parity.toLowerCase()) {
-      case 'even':
-        return SerialPortParity.even;
-      case 'odd':
-        return SerialPortParity.odd;
-      default:
-        return SerialPortParity.none;
-    }
-  }
+
+  // 000000000000000000000000000000000000000000000000000000
 
   Future<void> disconnect() async {
-    if (_serialPort != null && _serialPort!.isOpen) {
-      _serialPort!.close();
-      _serialPort = null;
+    if (port != null && port!.isOpen) {
+      port!.close();
+      port = null;
     }
     await SharedPrefHelper.saveBool(SharedPrefKeys.isConnect, false);
     isConnected = false;
     _dataSubscription?.cancel();
     _dataSubscription = null;
-    // if (!_dataController.isClosed) {
-    //   _dataController.close();
-    // }
   }
+
   Future<int> parseRawData(String rawData) async {
    // print(rawData);
     if (!rawData.startsWith('*')) {

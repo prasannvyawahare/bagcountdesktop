@@ -28,7 +28,7 @@ class _MasterScreenState extends State<MasterScreen> {
     ShiftSettingScreen(),
     ProductScreen(),
     VewReportScreen(),
-    ProfileScreen(userId: '1', softwareVersion: '3'),
+    ProfileScreen(userId: '1', softwareVersion: '1.1'),
   ];
 
   final List<String> _screenTitles = [
