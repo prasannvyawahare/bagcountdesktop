@@ -13,7 +13,7 @@ class ReadingRepository extends GetxService  {
   //final DatabaseHelper _databaseHelper = DatabaseHelper();
 
   final DatabaseHelper _databaseHelper  = Get.find<DatabaseHelper>();
-  // Create a new reading
+
   Future<int> insertReading(Reading reading) async {
     try {
 
@@ -22,16 +22,19 @@ class ReadingRepository extends GetxService  {
       // Perform raw insert into the Reading table with all fields
       final id = await db.rawInsert(
         '''INSERT INTO Reading(
-        timestamp, bay, truckNo, brand, mrp, ton,allottedBag
-      ) VALUES(?, ?, ?, ?, ?, ?,?)''',
+        timestamp,startTime,endTime, bay, truckNo, brand, mrp, ton,allottedBag,currentCount
+      ) VALUES(?, ?, ?, ?, ?, ?,?,?,?,?)''',
         [
-          reading.timestamp,    // timestamp
+          reading.timestamp,
+          reading.startTime,
+          reading.endTime,      // timestamp
           reading.bay,          // bay
           reading.truckNo,      // truckNo
           reading.brand,        // brand
           reading.mrp,          // mrp
           reading.ton,
-          reading. allottedBag
+          reading.allottedBag,
+          reading.currentCount
         ],
       );
     print("id db ${reading.allottedBag}");
@@ -45,159 +48,261 @@ class ReadingRepository extends GetxService  {
     }
   }
 
-  Future<List<ReadingWithCount>> getAllReadingsWithFilter({
+  Future<int> updateCurrentCount({required int id, required String newCount, required String endTime}) async {
+    try {
+      final db = await _databaseHelper.database;
+
+      // Perform the update query
+      final rowsAffected = await db.rawUpdate(
+        '''UPDATE Reading 
+         SET currentCount = ?, endTime = ?
+         WHERE id = ?''',
+        [newCount, endTime, id], // Ensure values match placeholders
+      );
+
+      print("Updated rows: $rowsAffected");
+      return rowsAffected; // Returns the number of updated rows
+    } catch (e) {
+      print('Error updating currentCount and endTime: $e');
+      return -1; // Indicate an error
+    }
+  }
+
+  Future<List<Reading>> getReadings() async {
+    try {
+      final db = await _databaseHelper.database;
+
+      // Fetch all records from the Reading table
+      final List<Map<String, dynamic>> maps = await db.query('Reading');
+
+      // Convert the list of maps into a list of Reading objects
+      return List.generate(maps.length, (i) {
+        return Reading(
+          id: maps[i]['id'],
+          timestamp: maps[i]['timestamp'],
+          startTime: maps[i]['startTime'],
+          endTime: maps[i]['endTime'],
+          bay: maps[i]['bay'],
+          truckNo: maps[i]['truckNo'],
+          brand: maps[i]['brand'],
+          mrp: maps[i]['mrp'],
+          ton: maps[i]['ton'],
+          allottedBag: maps[i]['allottedBag'],
+          currentCount: maps[i]['currentCount'],
+        );
+      });
+    } catch (e) {
+      print('Error fetching readings: $e');
+      return []; // Return an empty list in case of an error
+    }
+  }
+
+  Future<int> getTotalCurrentCountForDate(String date) async {
+    try {
+      final db = await _databaseHelper.database;
+      // Query to sum currentCount for a specific date
+      final List<Map<String, dynamic>> result = await db.rawQuery('''
+      SELECT SUM(currentCount) as totalCount 
+      FROM Reading 
+      WHERE DATE(timestamp) = ?
+    ''', [date]);
+
+      return result.first['totalCount'] as int? ?? 0; // Return sum or 0 if null
+    } catch (e) {
+      print('Error fetching total currentCount for $date: $e');
+      return 0; // Return 0 in case of an error
+    }
+  }
+
+   Future<double> getTotalWeightForDate(String date) async {
+   try {
+     final db = await _databaseHelper.database;
+
+     // Query to sum 'ton' values for a specific date
+     final List<Map<String, dynamic>> result = await db.rawQuery('''
+      SELECT SUM(ton) as totalTon 
+      FROM Reading 
+      WHERE DATE(timestamp) = ?
+    ''', [date]);
+
+     return result.first['totalTon'] as double? ?? 0.0; // Return sum or 0.0 if null
+   } catch (e) {
+     print('Error fetching total ton for $date: $e');
+     return 0.0; // Return 0.0 in case of an error
+   }
+  }
+
+  Future<int> getNegativeCurrentCountForDate(String date) async {
+    try {
+      final db = await _databaseHelper.database;
+
+      // Query to sum only negative currentCount values for a specific date
+      final List<Map<String, dynamic>> result = await db.rawQuery('''
+      SELECT SUM(currentCount) as totalNegativeCount 
+      FROM Reading 
+      WHERE DATE(timestamp) = ? AND currentCount < 0
+    ''', [date]);
+
+      return result.first['totalNegativeCount'] as int? ?? 0; // Return sum or 0 if null
+    } catch (e) {
+      print('Error fetching negative currentCount for $date: $e');
+      return 0; // Return 0 in case of an error
+    }
+  }
+
+  Future<List<Reading>> getFilteredReadings({
     DateTime? startDate,
     DateTime? endDate,
     TimeOfDay? startTime,
     TimeOfDay? endTime,
     String? brand,
     String? bay,
-
   })
   async {
     try {
       final db = await _databaseHelper.database;
 
-      // Construct WHERE clause and arguments dynamically
-      List<String> whereClauses = [
-        "r.id IS NOT NULL",
-        "rc.readingId IS NOT NULL"
-      ];
-      List<dynamic> whereArgs = [];
+      // Base query
+      String query = "SELECT * FROM Reading WHERE 1=1";
+      List<dynamic> args = [];
 
+      // Apply date filter (YYYY-MM-DD)
       if (startDate != null) {
-        whereClauses.add("DATE(r.timestamp) >= ?");
-        whereArgs.add(startDate.toIso8601String().split('T')[0]); // Extract date
+        query += " AND DATE(timestamp) >= ?";
+        args.add("${startDate.year}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')}");
       }
       if (endDate != null) {
-        whereClauses.add("DATE(r.timestamp) <= ?");
-        whereArgs.add(endDate.toIso8601String().split('T')[0]); // Extract date
-      }
-      // Convert TimeOfDay to HH:mm format
-      String formatTimeOfDay(TimeOfDay time) {
-        return "${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}";
+        query += " AND DATE(timestamp) <= ?";
+        args.add("${endDate.year}-${endDate.month.toString().padLeft(2, '0')}-${endDate.day.toString().padLeft(2, '0')}");
       }
 
-      // Time filters using SQLite strftime
+      // Apply time filter (HH:MM)
       if (startTime != null) {
-        whereClauses.add("strftime('%H:%M', r.timestamp) >= ?");
-        whereArgs.add(formatTimeOfDay(startTime));
+        query += " AND TIME(startTime) >= ?";
+        args.add("${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}");
       }
       if (endTime != null) {
-        whereClauses.add("strftime('%H:%M', r.timestamp) <= ?");
-        whereArgs.add(formatTimeOfDay(endTime));
-      }
-      if (brand != null) {
-        whereClauses.add("r.brand = ?");
-        whereArgs.add(brand);
-      }
-      if (bay != null) {
-        whereClauses.add("r.bay = ?");
-        whereArgs.add(bay);
+        query += " AND TIME(endTime) <= ?";
+        args.add("${endTime.hour.toString().padLeft(2, '0')}:${endTime.minute.toString().padLeft(2, '0')}");
       }
 
-      // Combine clauses
-      String whereClause = whereClauses.join(" AND ");
+      // Apply brand filter
+      if (brand != null && brand.isNotEmpty) {
+        query += " AND brand = ?";
+        args.add(brand);
+      }
 
-      final List<Map<String, dynamic>> maps = await db.rawQuery('''
-      SELECT 
-        r.id, 
-        r.timestamp, 
-        r.bay, 
-        r.truckNo, 
-        r.brand, 
-        r.mrp, 
-        r.ton, 
-        r.allottedBag, 
-        rc.count, 
-        rc.timestamp AS readingCountTimestamp 
-      FROM Reading r
-      INNER JOIN ReadingCount rc ON r.id = rc.readingId
-      WHERE $whereClause
-      ORDER BY r.timestamp
-    ''', whereArgs);
+      // Apply bay filter
+      if (bay != null && bay.isNotEmpty) {
+        query += " AND bay = ?";
+        args.add(bay);
+      }
 
-      print("Query : $whereClause");
-      print("Query : $whereArgs");
-      print("Readings from DB: $maps");
-      return maps.map((map) => ReadingWithCount.fromJson(map)).toList();
+      // Execute query
+      final List<Map<String, dynamic>> result = await db.rawQuery(query, args);
+
+      // Convert result to list of Reading objects
+      print("Readings from DB: $result");
+      return result.map((map) => Reading.fromJson(map)).toList();
     } catch (e) {
-      print('Error fetching readings: $e');
+      print('Error fetching filtered readings: $e');
       return [];
     }
   }
 
 
-
-  Future<List<ReadingWithCount>> getCombinedReadings() async {
-    try{
+  Future<List<Reading>> searchReading(String searchTerm) async {
+    try {
       final db = await _databaseHelper.database;
-      final List<Map<String, dynamic>> result = await db.rawQuery('''
-      SELECT 
-        r.id, 
-        r.timestamp, 
-        r.bay, 
-        r.truckNo, 
-        r.brand, 
-        r.mrp, 
-        r.ton, 
-        r.allottedBag, 
-        rc.count, 
-        rc.timestamp AS readingCountTimestamp 
-      FROM Reading r
-      INNER JOIN ReadingCount rc ON r.id = rc.readingId
-      WHERE r.id IS NOT NULL AND rc.readingId IS NOT NULL
-      ORDER BY r.timestamp;
-    ''');
-      print("Readings111 from DB: $result");
-      return result.map((map) => ReadingWithCount.fromJson(map)).toList();
-    }catch(e){
-      print('Error inserting reading1: $e');
+
+      // Define the columns to search in
+      List<String> columns = [
+        'timestamp',
+        'startTime',
+        'endTime',
+        'bay',
+        'truckNo',
+        'brand',
+        'mrp',
+        'ton',
+        'allottedBag',
+        'currentCount'
+      ];
+
+      // Build a WHERE clause that searches in all columns
+      String query = 'SELECT * FROM Reading WHERE ';
+      List<String> conditions = [];
+      List<dynamic> args = [];
+
+      for (String column in columns) {
+        conditions.add('$column LIKE ?');
+        args.add('%$searchTerm%'); // Searching with LIKE for partial matches
+      }
+
+      query += conditions.join(' OR ');
+
+      final List<Map<String, dynamic>> result = await db.rawQuery(query, args);
+
+      // Convert the result into a List of Reading objects
+      return result.map((data) => Reading.fromJson(data)).toList();
+    } catch (e) {
+      print('Error searching readings: $e');
       return [];
     }
-
   }
 
-  // Get a specific reading by ID
-  Future<Reading?> getReadingById(int id) async {
-    final db = await _databaseHelper.database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'Reading',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+  Future<List<Reading>> getTodayReadings(String day) async {
+    try {
+      final db = await _databaseHelper.database;
 
-    if (maps.isNotEmpty) {
-      return Reading.fromJson(maps.first);
+      // Query to get readings from the current day
+      final List<Map<String, dynamic>> result = await db.rawQuery(
+          'SELECT * FROM Reading WHERE DATE(timestamp) = ?',
+          [day]
+      );
+
+      // Convert the result into a List of Reading objects
+      return result.map((data) => Reading.fromJson(data)).toList();
+    } catch (e) {
+      print('Error fetching today\'s readings: $e');
+      return [];
     }
-    return null;
   }
 
-  // Update a reading
-  Future<int> updateReading(Reading reading) async {
-    final db = await _databaseHelper.database;
-    return await db.update(
-      'Reading',
-      reading.toJson(),
-      where: 'id = ?',
-      whereArgs: [reading.id],
-    );
+  Future<int> getTotalDifferentBrandCountByDate(String date) async {
+    try {
+      final db = await _databaseHelper.database;
+
+      // Query to count distinct brands for the given date
+      final List<Map<String, dynamic>> result = await db.rawQuery(
+          'SELECT COUNT(DISTINCT brand) as totalBrands FROM Reading WHERE DATE(timestamp) = ?',
+          [date]
+      );
+
+      return result.isNotEmpty ? result.first['totalBrands'] as int : 0;
+    } catch (e) {
+      print('Error fetching total different brand count for date $date: $e');
+      return 0;
+    }
   }
 
-  // Delete a reading
-  Future<int> deleteReading(int id) async {
-    final db = await _databaseHelper.database;
-    return await db.delete(
-      'Reading',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+  Future<int> getTotalDifferentTruckCountByDate(String date) async {
+    try {
+      final db = await _databaseHelper.database;
+
+      // Query to count distinct truck numbers for a given date
+      final List<Map<String, dynamic>> result = await db.rawQuery(
+          'SELECT COUNT(DISTINCT truckNo) as totalTrucks FROM Reading WHERE DATE(timestamp) = ?',
+          [date]
+      );
+
+      return result.isNotEmpty ? result.first['totalTrucks'] as int : 0;
+    } catch (e) {
+      print('Error fetching total different truck count for date $date: $e');
+      return 0;
+    }
   }
 
-  Future<int> deleteAllReadings() async {
-    final db = await _databaseHelper.database;
-    return await db.rawDelete('DELETE FROM Reading');
-  }
 
   Future<void> printDatabasePath() async {
     String databasesPath = await getDatabasesPath();
@@ -213,6 +318,31 @@ class ReadingRepository extends GetxService  {
       print("Database file not found.");
     }
   }
+
+  Future<int> doesTodayReadingExist(String todayDate) async {
+    try {
+      final db = await _databaseHelper.database;
+      final List<Map<String, dynamic>> result = await db.rawQuery(
+          '''
+      SELECT 1 FROM Reading 
+      WHERE timestamp LIKE ?
+      LIMIT 1
+      ''',
+          ['$todayDate%'] // Match records starting with today's date
+      );
+    print(result.first.entries
+        .map((entry) => '${entry.key}: ${entry.value}')
+        .join(', '));
+      return result.isNotEmpty ? 1 : 0;
+    } catch (e) {
+      print('Error checking if today\'s reading exists: $e');
+      return 0;
+      }
+      }
+
+
+
+
   Future<void> deleteDatabaseFile() async {
     String databasesPath = await getDatabasesPath();
     String dbPath = '$databasesPath/app_database.db'; // Replace with your DB name

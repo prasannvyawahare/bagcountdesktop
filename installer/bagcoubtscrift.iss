@@ -2,9 +2,9 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "BagCouterApp"
-#define MyAppVersion "1.1"
-#define MyAppPublisher "My Company, Inc."
-#define MyAppURL "https://www.example.com/"
+#define MyAppVersion "1.3"
+#define MyAppPublisher "TheCodeMiners digital solutions"
+#define MyAppURL "https://thecodeminers.com/"
 #define MyAppExeName "bagreportun.exe"
 
 [Setup]

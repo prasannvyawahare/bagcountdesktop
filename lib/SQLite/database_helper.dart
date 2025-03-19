@@ -19,8 +19,6 @@ class DatabaseHelper {
     return await _initDatabase();
   }
 
-
-
   Future<Database> _initDatabase() async {
     sqfliteFfiInit();
     final dbFactory = databaseFactoryFfi;
@@ -59,12 +57,15 @@ class DatabaseHelper {
             CREATE TABLE Reading (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               timestamp TEXT,
+              startTime TEXT,
+              endTime TEXT,
               bay TEXT,
               truckNo TEXT,
               brand TEXT,
               mrp REAL,
               ton REAL,
-              allottedBag TEXT
+              allottedBag TEXT,
+              currentCount TEXT
             );
           ''');
 

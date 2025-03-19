@@ -11,41 +11,40 @@ import '../repository/reading_repository.dart';
 import '../util/constant_string.dart';
 import '../util/shared_pref_helper.dart';
 
-class SerialPortService extends GetxController  {
-  static SerialPortService get instance => Get.find();
+class SerialPortService extends GetxController {
 
-  RxList<ReadingWithCount> readingWithCountList = <ReadingWithCount>[].obs; // List to store readings
+  static SerialPortService get instance => Get.find();
+  RxList<ReadingWithCount> readingWithCountList = <ReadingWithCount>[].obs;
+  RxList<Reading> readingList = <Reading>[].obs;
+  RxList<Reading> dayReadingList = <Reading>[].obs;
   final StreamController<String> _dataController = StreamController<String>.broadcast();
   bool isConnected = false;
   StreamSubscription? _dataSubscription;
-  //final readingRepository = ReadingRepository();
- // final readingCountRepository = ReadingCountRepository();
   Stream<String> get dataStream => _dataController.stream;
-  //String oldCount='';
-  String newCount='';
+  String newCount = '';
   Timer? _debounceTimer1;
-  Timer? _debounceTimer2;
   final Map<int, String> _lastCounts = {};
   int _currentReadingId = 0;
-  RxInt negativeCount=0.obs;
+  RxString negativeCount = "".obs;
+  RxString totalCount = "".obs;
+  RxString brandTotalCount = "".obs;
+  RxString truckTotalCount = "".obs;
 
-
-    late ReadingRepository readingRepository ; // Fetch instance
-    late ReadingCountRepository readingCountRepository ; // Fetch instance
-
+  late ReadingRepository readingRepository; // Fetch instance
+  late ReadingCountRepository readingCountRepository; // Fetch instance
 
   @override
   void onInit() {
     super.onInit();
     _loadData();
   }
-  _loadData() async{
-    readingRepository = await  Get.find<ReadingRepository>();
-    readingCountRepository = await  Get.find<ReadingCountRepository>();
+
+  _loadData() async {
+    readingRepository = await Get.find<ReadingRepository>();
+    readingCountRepository = await Get.find<ReadingCountRepository>();
     getAllReadingData();
-    getNegativeCount();
   }
-  // 00000000000000000000000000000000000000000000000000000000000000000000
+
   List<String> availablePorts = [];
   SerialPort? port;
   SerialPortReader? reader;
@@ -65,7 +64,7 @@ class SerialPortService extends GetxController  {
   }
 
   void openPort(String portName) async {
-   await disconnect(); // Close existing port before opening a new one
+    await disconnect(); // Close existing port before opening a new one
 
     port = SerialPort(portName);
     if (!port!.openReadWrite()) {
@@ -86,10 +85,9 @@ class SerialPortService extends GetxController  {
   }
 
   void startReading() {
-    print("📡 Listening for data...");
     String _buffer = '';
-    String currentReading='';
-    int readingId=0;
+    String currentReading = '';
+    int readingId = 0;
     reader = SerialPortReader(port!);
     reader!.stream.listen((data) async {
       String newData = String.fromCharCodes(data).trim();
@@ -97,36 +95,32 @@ class SerialPortService extends GetxController  {
         String receivedData = String.fromCharCodes(data);
         _dataController.add(receivedData); // Send data to stream
         _buffer += receivedData;
-        print("_buffer0 $_buffer");
-        if(_buffer.startsWith("*") && _buffer.length == 20){
-          currentReading=_buffer;
-          readingId= await parseRawData(_buffer);
-          print("_buffer1 $_buffer");
-          _currentReadingId=readingId;
-          print("_currentReadingId $_currentReadingId");
-          _buffer='';
+
+        if (_buffer.startsWith("*") && _buffer.length == 20) {
+          currentReading = _buffer;
+          readingId = await parseRawData(_buffer);
+          _currentReadingId = readingId;
+          _buffer = '';
         }
         _debounceTimer1?.cancel();
+
         _debounceTimer1 = Timer(Duration(milliseconds: 200), () async {
           RegExp regex = RegExp(r"[$#](?:\](\d+)|(\d+))"); // Updated regex
           Iterable<Match> matches = regex.allMatches(_buffer);
-          print("_buffer $_buffer");
+
           for (Match match in matches) {
             String? positiveValue = match.group(2); // Normal positive values
             String? negativeValue = match.group(1); // Values from `#]`
-
-            String counterValue = negativeValue != null ? "-$negativeValue" : positiveValue!;
+            String counterValue =
+                negativeValue != null ? "-$negativeValue" : positiveValue!;
 
             if (_currentReadingId == 0) continue;
-            print("counterValue $counterValue");
 
             if (_lastCounts[_currentReadingId] != counterValue) {
-              var readingCount = ReadingCount(
-                count: counterValue,
-                readingId: _currentReadingId,
-                timestamp: DateTime.now().toIso8601String(),
-              );
-              var hash = await readingCountRepository.insertReadingCount(readingCount);
+              final timestamp = DateTime.now().toIso8601String();
+              final time = timestamp.split('T')[1].substring(0, 5);
+              var hash = await readingRepository.updateCurrentCount(
+                  id: _currentReadingId, newCount: counterValue, endTime: time);
               print("hash* $hash");
               _lastCounts[_currentReadingId] = counterValue;
               getAllReadingData();
@@ -134,20 +128,11 @@ class SerialPortService extends GetxController  {
           }
           _buffer = '';
         });
-
-
-      } else {
-        print("⚠️ Received Empty Data!");
       }
     }, onError: (error) {
-      print('❌ Serial Error: $error');
-      print("🔄 Restarting Serial Connection...");
       //restartSerialPort();
     });
   }
-
-
-  // 000000000000000000000000000000000000000000000000000000
 
   Future<void> disconnect() async {
     if (port != null && port!.isOpen) {
@@ -155,13 +140,15 @@ class SerialPortService extends GetxController  {
       port = null;
     }
     await SharedPrefHelper.saveBool(SharedPrefKeys.isConnect, false);
+    var isConnect = await SharedPrefHelper.getBool(SharedPrefKeys.isConnect) ?? false;
+    print(isConnect) ;
     isConnected = false;
     _dataSubscription?.cancel();
     _dataSubscription = null;
   }
 
   Future<int> parseRawData(String rawData) async {
-   // print(rawData);
+    // print(rawData);
     if (!rawData.startsWith('*')) {
       throw Exception('Invalid Data Format');
     }
@@ -171,112 +158,162 @@ class SerialPortService extends GetxController  {
       List<String> parts = rawData.split(RegExp(r'[\$\#]')); // Split at $ and #
 
       String dataPart = parts[0]; // Main data
-      String counterStatus = parts.length > 1 ? parts[1] : ""; // Counter status before #
+      String counterStatus =
+          parts.length > 1 ? parts[1] : ""; // Counter status before #
 
       // Extract values
       String bay = dataPart.substring(0, 2); // First 2 digits = Bay
       String truckNo = dataPart.substring(2, 6); // Next 4 digits = Truck No.
       String brand = dataPart.substring(6, 9); // Next 3 characters = Brand
-      double mrp =double.parse( dataPart.substring(9, 12)); // Next 3 digits = MRP
-      double ton = (int.parse(dataPart.substring(12, 15)) / 10).toDouble(); // Next 3 digits = Ton (divided by 10)
+      double mrp =
+          double.parse(dataPart.substring(9, 12)); // Next 3 digits = MRP
+      double ton = (int.parse(dataPart.substring(12, 15)) / 10)
+          .toDouble(); // Next 3 digits = Ton (divided by 10)
       int allottedBag = (int.parse(dataPart.substring(15, 18))); // allowted bag
       print("allowted_baf: ${allottedBag}");
 
-
-      if(bay=='10'){
-         bay="01";
-      }else{
-         bay="02";
+      if (bay == '10') {
+        bay = "01";
+      } else {
+        bay = "02";
       }
 
-     final timestamp=DateTime.now().toIso8601String();
-     final reading = Reading(
-       timestamp: timestamp,
-       bay: bay,
-       truckNo: truckNo,
-       brand: brand,
-       mrp: mrp,
-       ton: ton,
-         allottedBag:allottedBag
-     );
+      final timestamp = DateTime.now().toIso8601String();
+      final date = timestamp.split('T')[0];
+      final time = timestamp.split('T')[1].substring(0, 5);
 
-      print("allowted_baf2: ${reading.toString()}");
-    var id =await readingRepository.insertReading(reading);
+      final reading = Reading(
+          timestamp: date,
+          startTime: time,
+          endTime: time,
+          bay: bay,
+          truckNo: truckNo,
+          brand: brand,
+          mrp: mrp,
+          ton: ton,
+          allottedBag: allottedBag.toString(),
+          currentCount: allottedBag.toString());
 
-
-      var readingCount = ReadingCount(
-        count: allottedBag.toString(),
-        readingId: id,
-        timestamp: DateTime.now().toIso8601String(),
-      );
-      var hash = await readingCountRepository.insertReadingCount(readingCount);
-      print("hash* $hash");
+      var id = await readingRepository.insertReading(reading);
       _lastCounts[_currentReadingId] = allottedBag.toString();
       getAllReadingData();
-     return id;
-      // return TruckData(
-      //   bay: bay,
-      //   truckNo: truckNo,
-      //   brand: brand,
-      //   mrp: mrp,
-      //   ton: ton,
-      //   counterStatus: counterStatus,
-      // );
+      return id;
     } catch (e) {
       throw Exception('Error parsing data: $e');
     }
   }
 
-  getAllReadingWithFilter(
-  {DateTime? startDate,
-      DateTime? endDate,
+  getAllReadingWithFilter({
+    DateTime? startDate,
+    DateTime? endDate,
     TimeOfDay? startTime,
     TimeOfDay? endTime,
-      String? brand,
-      String? bay,}
-      ) async{
-    List<ReadingWithCount> readingsWithC=  await readingRepository.getAllReadingsWithFilter(
-      startTime: startTime,startDate: startDate,endTime:endTime,endDate: endDate,brand: brand,bay: bay
-    );
-    for(ReadingWithCount read1 in readingsWithC){
-      print("read1.count ${read1.count}");
-    }
-   readingWithCountList.assignAll(readingsWithC.reversed);
-    readingWithCountList.refresh();
-  }
+    String? brand,
+    String? bay,
+  }) async {
+    List<Reading> readingsWithC =
+        await readingRepository.getFilteredReadings(
+            startTime: startTime,
+            startDate: startDate,
+            endTime: endTime,
+            endDate: endDate,
+            brand: brand,
+            bay: bay);
 
+    readingList.assignAll(readingsWithC.reversed);
+    readingList.refresh();
+  }
 
   getAllReadingData() async {
-try {
-  List<ReadingWithCount> readingsWithC = await readingRepository
-      .getCombinedReadings();
-  for(ReadingWithCount read1 in readingsWithC){
-    // print("read1.count ${read1.count}");
+    try {
+      List<Reading> readings = await readingRepository.getReadings();
+      readingList.assignAll(readings.reversed);
+      readingList.refresh();
+
+
+      final timestamp = DateTime.now().toIso8601String();
+      final date = timestamp.split('T')[0];
+      getDayWiseReading(date);
+    } catch (e) {
+      print("error : $e");
+    }
+    final timestamp = DateTime.now().toIso8601String();
+    final date = timestamp.split('T')[0];
+    getNegativeCount(date);
+    getTotalTon(date);
   }
-  readingWithCountList.assignAll(readingsWithC.reversed);
-  readingWithCountList.refresh();
-}catch(e){
-  print("error : $e");
-}
+
+
+  getNegativeCount(String date) async {
+
+    var count = await readingRepository.getNegativeCurrentCountForDate(date);
+    negativeCount.value= count.toString();
+    print("negativeCount $count");
   }
 
-
-  getNegativeCount() async {
-    await readingCountRepository
-        .getNegativeValues();
-    negativeCount.value= await readingCountRepository.printNegativeValues();
-
-
+  getTotalTon(String date) async {
+    var count = await readingRepository.getTotalWeightForDate(date);
+    totalCount.value=count.toStringAsFixed(2);
   }
+
   void closeDb() async {
-    await readingRepository. closeDb();
+    await readingRepository.closeDb();
   }
+
+  searchReadingData(String search) async {
+    List<Reading> readings = await readingRepository.searchReading(search);
+    readingList.assignAll(readings.reversed);
+    readingList.refresh();
+    dayReadingList.refresh();
+  }
+  getAllBrandCount(String date) async {
+
+    var count=  await readingRepository.getTotalDifferentBrandCountByDate(date);
+    brandTotalCount.value=count.toString();
+    brandTotalCount.refresh();
+    dayReadingList.refresh();
+  }
+
+  getAllTruckCount(String date) async {
+    var count=  await readingRepository.getTotalDifferentTruckCountByDate(date);
+    truckTotalCount.value=count.toString();
+    truckTotalCount.refresh();
+    dayReadingList.refresh();
+  }
+  getDayWiseReading(String day)async{
+
+    List<Reading> readings =  await readingRepository. getTodayReadings(day);
+    if(readings.length>0){
+      dayReadingList.assignAll(readings.reversed);
+      dayReadingList.refresh();
+      getTotalTon(day);
+      getNegativeCount(day);
+      getAllBrandCount(day);
+      getAllTruckCount(day);
+    }else{
+      totalCount.value=0.toString();
+      negativeCount.value=0.toString();
+      brandTotalCount.value=0.toString();
+      truckTotalCount.value=0.toString();
+      dayReadingList.clear();
+      dayReadingList.refresh();
+    }
+
+
+  }
+
 
   @override
-  void dispose() {
+  Future<void> dispose() async {
     // TODO: implement dispose
-    disconnect();
-    closeDb();
     super.dispose();
+    try {
+      _dataController.close();
+      _dataSubscription?.cancel();
+      await disconnect();
+
+    } catch (e) {
+      print("error : $e");
+    }
   }
 }

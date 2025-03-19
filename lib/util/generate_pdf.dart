@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:bagreportun/model/reading.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -7,9 +8,9 @@ import 'package:intl/intl.dart';
 
 import '../model/reading_with_count.dart';
 
-Future<String> exportReadingsToPdf(List<ReadingWithCount> readings) async {
+Future<String> exportReadingsToPdf(List<Reading> readings) async {
   final pdf = pw.Document();
-
+  int count = 1;
   // Add Title
   pdf.addPage(
     pw.Page(
@@ -19,14 +20,21 @@ Future<String> exportReadingsToPdf(List<ReadingWithCount> readings) async {
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
             pw.Text(
-              'Readings Report',
+              'RCCPL Pvt. Ltd. Butibori (GU)',
+              style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
+            ),
+            pw.SizedBox(height: 10),
+             pw.Text(
+              'Packer Data',
               style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
             ),
             pw.SizedBox(height: 10),
             pw.Table.fromTextArray(
               headers: [
-                'ID',
-                'Timestamp',
+                'Sr.No.',
+                'Date',
+                'Start Time',
+                'End Time',
                 'Bay',
                 'TruckNo',
                 'Brand',
@@ -34,20 +42,22 @@ Future<String> exportReadingsToPdf(List<ReadingWithCount> readings) async {
                 'Ton',
                 'AllottedBag',
                 'Count',
-                'ReadingCountTimestamp'
+                'Extra Bags'
               ],
               data: readings.map((reading) {
                 return [
-                  reading.id ?? 0,
+                  '${count++}',
                   reading.timestamp?.toString() ?? '',
+                  reading.startTime?.toString() ?? '',
+                  reading.endTime?.toString() ?? '',
                   reading.bay ?? '',
                   reading.truckNo ?? '',
                   reading.brand ?? '',
                   reading.mrp?.toString() ?? '0.0',
                   reading.ton?.toString() ?? '0.0',
                   reading.allottedBag?.toString() ?? '0',
-                  reading.count?.toString() ?? '0',
-                  reading.readingCountTimestamp?.toString() ?? '',
+                  int.parse(reading.currentCount)<0 ? '0':reading.currentCount?.toString() ,
+                  int.parse(reading.currentCount)<0 ? reading.currentCount?.toString() :'0'
                 ];
               }).toList(),
               border: pw.TableBorder.all(),

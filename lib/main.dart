@@ -9,8 +9,17 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'SQLite/database_helper.dart';
 import 'controller/serial_port_service.dart';
-
 void main() async {
+  // WidgetsFlutterBinding.ensureInitialized();
+  // await windowManager.ensureInitialized();
+  //
+  // windowManager.waitUntilReadyToShow().then((_) async {
+  //   await windowManager.setFullScreen(true);
+  // });
+  //
+
+
+
   WidgetsFlutterBinding.ensureInitialized();
   sqfliteFfiInit();
   databaseFactory = databaseFactoryFfi;

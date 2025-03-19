@@ -1,3 +1,4 @@
+import 'package:bagreportun/history_screnn.dart';
 import 'package:bagreportun/login_screen.dart';
 import 'package:bagreportun/product_screen.dart';
 import 'package:bagreportun/profile_screen.dart';
@@ -28,6 +29,7 @@ class _MasterScreenState extends State<MasterScreen> {
     ShiftSettingScreen(),
     ProductScreen(),
     VewReportScreen(),
+    HistoryScrenn(),
     ProfileScreen(userId: '1', softwareVersion: '1.1'),
   ];
 
@@ -37,6 +39,7 @@ class _MasterScreenState extends State<MasterScreen> {
     'Shift Settings',
     'Product Management',
     'View Report',
+    'History',
     'About us',
     'Logout'
   ];
@@ -82,7 +85,24 @@ class _MasterScreenState extends State<MasterScreen> {
           Expanded(
             child: Column(
               children: [
-                // Header Section
+                // Container(
+                //   height: 30,
+                //   child: Row(
+                //     mainAxisAlignment: MainAxisAlignment.end,
+                //                       children: [
+                //                         IconButton(
+                //                           iconSize: 20,
+                //                           icon: const Icon(
+                //                             Icons.close,color: Colors.red,
+                //                           ),
+                //                           onPressed: () async {
+                //                             await windowManager.close();
+                //                           },
+                //                         ),
+                //                       ],
+                //   ),
+                // ),
+                _screenTitles[_selectedIndex]=="Dashboard"?SizedBox():
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -106,13 +126,14 @@ class _MasterScreenState extends State<MasterScreen> {
                         style: TextStyle(fontSize: 18, color: Colors.blue, fontWeight: FontWeight.bold),
                       ),
 
-                      Text(
-                        _screenTitles[_selectedIndex],
-                        style: TextStyle(fontSize: 16, color: Colors.grey, fontWeight: FontWeight.bold),
-                      ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
+                          Text(
+                            _screenTitles[_selectedIndex],
+                            style: TextStyle(fontSize: 16, color: Colors.grey, fontWeight: FontWeight.bold),
+                          ),
+
 
                           // IconButton(
                           //   icon: Icon(Icons.menu, color: Colors.black),
@@ -144,6 +165,13 @@ class _MasterScreenState extends State<MasterScreen> {
     setState(() {
       _isCollapsed = !_isCollapsed;
     });
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+
   }
 }
 
@@ -177,11 +205,12 @@ class SideMenu extends StatelessWidget {
             children: [
               _buildDrawerItem(
                   "Dashboard", "images/icons/menu_dashboard.svg", 0,context),
-              _buildDrawerItem("Port", "images/icons/menu_store.svg", 1,context),
+              _buildDrawerItem("Port", "images/icons/one_drive.svg", 1,context),
               _buildDrawerItem("Shift", "images/icons/menu_doc.svg", 2,context),
               _buildDrawerItem("Brand", "images/icons/pdf_file.svg", 3,context),
-              _buildDrawerItem("View Report", "images/icons/menu_tran.svg", 4,context),
-              _buildDrawerItem("About Us", "images/icons/menu_profile.svg", 5,context),
+              _buildDrawerItem("Live Report", "images/icons/menu_tran.svg", 4,context),
+              _buildDrawerItem("History ", "images/icons/history_menu.svg", 5,context),
+              _buildDrawerItem("About Us", "images/icons/menu_profile.svg", 6,context),
               _buildDrawerItem("Logout", "images/icons/menu_store.svg", -1,context),
             ],
           ),

@@ -17,7 +17,7 @@ class _ProductScreenState extends State<ProductScreen> {
   final TextEditingController _productPriceController = TextEditingController();
 
   late Future<List<Product>> _productList;
-  bool _isAddProductExpanded = false; // Controls the expansion state of the card
+  bool _isAddProductExpanded = true; // Controls the expansion state of the card
 
   @override
   void initState() {
@@ -93,12 +93,11 @@ class _ProductScreenState extends State<ProductScreen> {
       backgroundColor: Colors.white60,
       body: Container(
 
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              // New product input form as a collapsible card
-              ExpansionPanelList(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: ExpansionPanelList(
 
                 elevation: 1,
                 expandedHeaderPadding: const EdgeInsets.all(0),
@@ -156,48 +155,48 @@ class _ProductScreenState extends State<ProductScreen> {
                   ),
                 ],
               ),
+            ),
 
-              const SizedBox(height: 20),
+            const SizedBox(height: 20),
 
-              // Product list display
-              const Text(
-                "Existing Brands",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 10),
+            // Product list display
+            const Text(
+              "Existing Brands",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
 
-              // Displaying product list
-              Expanded(
-                child: FutureBuilder<List<Product>>(
-                  future: _productList,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    } else if (snapshot.hasError) {
-                      return Center(child: Text('Error: ${snapshot.error}'));
-                    } else if (snapshot.hasData) {
-                      final products = snapshot.data!;
-                      if (products.isEmpty) {
-                        return const Center(child: Text("No products available"));
-                      }
-                      return ListView.builder(
-                        itemCount: products.length,
-                        itemBuilder: (context, index) {
-                          final product = products[index];
-                          return ProductCard(
-                            product: product,
-                            onDelete: () => _deleteProduct(product.id!),
-                          );
-                        },
-                      );
-                    } else {
-                      return const Center(child: Text("No Brand available"));
+            // Displaying product list
+            Expanded(
+              child: FutureBuilder<List<Product>>(
+                future: _productList,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  } else if (snapshot.hasData) {
+                    final products = snapshot.data!;
+                    if (products.isEmpty) {
+                      return const Center(child: Text("No products available"));
                     }
-                  },
-                ),
+                    return ListView.builder(
+                      itemCount: products.length,
+                      itemBuilder: (context, index) {
+                        final product = products[index];
+                        return ProductCard(
+                          product: product,
+                          onDelete: () => _deleteProduct(product.id!),
+                        );
+                      },
+                    );
+                  } else {
+                    return const Center(child: Text("No Brand available"));
+                  }
+                },
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
